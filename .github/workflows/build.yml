@@ -31,7 +31,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install Godot
-        run: tools/ci_install_godot.sh "$GODOT_VERSION" 0
+        run: bash tools/ci_install_godot.sh "$GODOT_VERSION" 0
       - name: Import project
         run: godot --headless --path . --import
       - name: Smoke test
@@ -46,7 +46,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install Godot and export templates
-        run: tools/ci_install_godot.sh "$GODOT_VERSION" 1
+        run: bash tools/ci_install_godot.sh "$GODOT_VERSION" 1
       - name: Import project
         run: godot --headless --path . --import
       - name: Export web
@@ -112,7 +112,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install Godot and export templates
-        run: tools/ci_install_godot.sh "$GODOT_VERSION" 1
+        run: bash tools/ci_install_godot.sh "$GODOT_VERSION" 1
       - name: Import project
         run: godot --headless --path . --import
       - name: Export
