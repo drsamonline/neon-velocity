@@ -29,9 +29,10 @@ export PATH="${DEST}:${PATH}"
 if [ "${WITH_TEMPLATES}" = "1" ]; then
   TPL="Godot_v${VERSION}-stable_export_templates.tpz"
   wget -q "https://github.com/godotengine/godot/releases/download/${VERSION}-stable/${TPL}"
-  mkdir -p "${HOME}/.local/share/godot/export_templates"
+  TARGET="${HOME}/.local/share/godot/export_templates/${VERSION}.stable"
+  mkdir -p "${TARGET}"
   unzip -q "${TPL}"
-  mv templates/* "${HOME}/.local/share/godot/export_templates/${VERSION}.stable/"
+  mv templates/* "${TARGET}/"
   rm -rf templates
 fi
 
