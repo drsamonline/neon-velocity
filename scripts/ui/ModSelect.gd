@@ -3,6 +3,7 @@ class_name ModSelect
 ## Pops up when a mod pickup is collected: pick one of three.
 
 var _buttons: Array[Button] = []
+var _choices: Array[String] = []
 var _open: bool = false
 
 
@@ -44,7 +45,9 @@ func _build(choices: Array) -> void:
 	box.add_child(title)
 
 	_buttons.clear()
+	_choices.clear()
 	for mod_id in choices:
+		_choices.append(String(mod_id))
 		var mod: Dictionary = WeaponSystem.MODS[String(mod_id)]
 		var button := Button.new()
 		button.text = "%s\n%s" % [String(mod["name"]), String(mod["blurb"])]
@@ -54,6 +57,22 @@ func _build(choices: Array) -> void:
 		button.pressed.connect(func() -> void: _choose(id))
 		box.add_child(button)
 		_buttons.append(button)
+
+
+## Pick by index; also used by the number keys and by the automated tests.
+func choose(index: int) -> void:
+	if not _open or index < 0 or index >= _choices.size():
+		return
+	_choose(_choices[index])
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not _open or not (event is InputEventKey) or not event.is_pressed():
+		return
+	var key := (event as InputEventKey).physical_keycode
+	if key >= KEY_1 and key <= KEY_3:
+		choose(key - KEY_1)
+		get_viewport().set_input_as_handled()
 
 
 func _choose(mod_id: String) -> void:

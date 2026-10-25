@@ -23,8 +23,8 @@ var _armed: bool = false
 func _ready() -> void:
 	collision_layer = 1 << (LAYER_PICKUP - 1)
 	collision_mask = 1 << (LAYER_PLAYER - 1)
-	monitoring = true
-	monitorable = false
+	set_deferred("monitoring", true)
+	set_deferred("monitorable", false)
 	var circle := CircleShape2D.new()
 	circle.radius = 20.0
 	var shape := CollisionShape2D.new()

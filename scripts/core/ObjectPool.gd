@@ -7,8 +7,8 @@ extends Node
 ## camera moves the canvas, so they render correctly wherever they are parented.
 
 const POOL_DEFS := {
-	"bullet_player": {"script": preload("res://scripts/entities/Bullet.gd"), "size": 140},
-	"bullet_enemy": {"script": preload("res://scripts/entities/Bullet.gd"), "size": 220},
+	"bullet_player": {"script": preload("res://scripts/entities/Bullet.gd"), "size": 220},
+	"bullet_enemy": {"script": preload("res://scripts/entities/Bullet.gd"), "size": 320},
 	"drone": {"script": preload("res://scripts/enemies/DroneEnemy.gd"), "size": 60},
 	"powerup": {"script": preload("res://scripts/entities/Powerup.gd"), "size": 24},
 	"spark": {"script": preload("res://scripts/effects/Spark.gd"), "size": 48},

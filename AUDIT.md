@@ -23,6 +23,9 @@ Engine: **Godot 4.3.stable.official.77dcf97d8**, headless, `gl_compatibility`.
 | 12 | Save round-trip | write then read `user://save_game.save` | PASS |
 | 13 | Mod application | `spread_wide` adds a projectile (5 → 6) | PASS |
 | 14 | Replay recording | `ReplaySystem.frame_count() > 0` after a run | PASS |
+| 15 | 50-second soak (chunk 0 → 7, boss at 4) | `SoakTest.tscn`, 3 consecutive runs | no errors, score 450–540, ~20 kills, 217 peak live bullets |
+| 16 | Pool growth under load | soak with 320 enemy + 220 player bullets preallocated | no "flushing queries" errors after the deferred-monitoring fix |
+| 17 | Exported Linux build boots | `build/linux/NeonVelocity.x86_64 --headless --quit-after 150` | clean |
 
 ## Checklist
 

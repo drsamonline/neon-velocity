@@ -76,9 +76,13 @@ func _run_tests() -> void:
 	# --- drive it ------------------------------------------------------
 	Input.action_press("fire")
 	Input.action_press("move_right")
+	var mod_select := _find_mod_select(main)
 	var start_score := int(GameManager.run_data["score"])
 	for i in 420:
 		await get_tree().physics_frame
+		# Resolve any mod offer so the run cannot stall on a paused tree.
+		if get_tree().paused and mod_select != null and mod_select.is_open():
+			mod_select.choose(0)
 	Input.action_release("fire")
 	Input.action_release("move_right")
 
@@ -115,3 +119,13 @@ func _run_tests() -> void:
 		await get_tree().process_frame
 	_check(signal_fired[0], "game_over was not emitted when the player died")
 	_check(not GameManager.running, "run did not end")
+
+
+func _find_mod_select(node: Node) -> ModSelect:
+	for child in node.get_children():
+		if child is ModSelect:
+			return child
+		var found := _find_mod_select(child)
+		if found != null:
+			return found
+	return null

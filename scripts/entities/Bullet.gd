@@ -30,8 +30,10 @@ var _retarget_timer: float = 0.0
 
 
 func _ready() -> void:
-	monitoring = true
-	monitorable = false
+	# Deferred: bullets can be instantiated mid-physics-flush (pool growth from
+	# a hit callback), where changing monitoring state synchronously is illegal.
+	set_deferred("monitoring", true)
+	set_deferred("monitorable", false)
 	var circle := CircleShape2D.new()
 	circle.radius = 7.0
 	_shape = CollisionShape2D.new()

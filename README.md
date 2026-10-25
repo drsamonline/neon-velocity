@@ -69,6 +69,9 @@ docs/          SPEC.md (the original brief), REVIEW.md (audit of that brief)
 # headless smoke test: boots Main, plays 7 seconds of synthetic input, asserts 27 things
 godot --headless --path . res://scenes/TestRunner.tscn
 
+# 50-second soak run: chunk streaming, pooling and the first boss fight
+godot --headless --path . res://scenes/tools/SoakTest.tscn
+
 # dump every generated sprite to art_preview/ for inspection
 godot --headless --path . res://scenes/tools/DumpSprites.tscn
 ```
