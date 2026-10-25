@@ -1,0 +1,16 @@
+# Godot
+.godot/
+*.translation
+
+# Export output
+build/
+*.exe
+*.pck
+*.zip
+
+# Generated art previews (see scripts/tools/dump_sprites.gd)
+art_preview/
+
+# OS noise
+.DS_Store
+Thumbs.db
