@@ -76,25 +76,23 @@ func _build_background() -> void:
 	parallax.layer = -10
 	add_child(parallax)
 
-	_add_parallax_layer(parallax, "nebula", 0.06, Color(0.55, 0.55, 0.8, 0.45), 3.0)
-	_add_parallax_layer(parallax, "starfield", 0.18, Color(0.9, 0.9, 1.0, 0.9), 3.0)
-	_add_parallax_layer(parallax, "mountains", 0.45, Color(0.7, 0.7, 0.9, 0.75), 1.0)
+	_add_parallax_layer(parallax, "nebula", 0.05, Color(0.75, 0.65, 1.0, 0.30), Vector2(5.0, 3.0), -360.0)
+	_add_parallax_layer(parallax, "starfield", 0.16, Color(1.0, 1.0, 1.0, 0.85), Vector2(5.0, 3.0), -360.0)
+	_add_parallax_layer(parallax, "mountains", 0.42, Color(0.55, 0.6, 0.85, 0.65), Vector2(2.5, 1.5), 120.0)
 
 
-func _add_parallax_layer(parent: ParallaxBackground, texture_name: String, motion: float, tint: Color, scale_y: float) -> void:
+func _add_parallax_layer(parent: ParallaxBackground, texture_name: String, motion: float, tint: Color, sprite_scale: Vector2, offset_y: float) -> void:
 	var layer := ParallaxLayer.new()
-	layer.motion_scale = Vector2(motion, motion * 0.35)
+	layer.motion_scale = Vector2(motion, motion * 0.3)
 	var sprite := Sprite2D.new()
 	sprite.texture = Art.texture(texture_name)
 	sprite.centered = false
 	sprite.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
-	var texture_size := sprite.texture.get_size()
-	var scale_x := ceilf(1280.0 / texture_size.x) + 1.0
-	var scale_y_needed := ceilf(720.0 / texture_size.y) + 1.0
-	sprite.scale = Vector2(scale_x, scale_y_needed * scale_y)
-	sprite.position = Vector2(-640, -360)
+	sprite.scale = sprite_scale
+	sprite.position = Vector2(-640, offset_y)
 	sprite.modulate = tint
-	layer.motion_mirroring = Vector2(texture_size.x * sprite.scale.x, 0)
+	# Repeat the layer horizontally so it never runs out as the camera scrolls.
+	layer.motion_mirroring = Vector2(sprite.texture.get_size().x * sprite_scale.x, 0)
 	layer.add_child(sprite)
 	parent.add_child(layer)
 

@@ -8,6 +8,9 @@ no PNGs, no OGGs, no fonts — just GDScript, three shaders and two scene files.
 godot --path .          # or open the folder in the Godot 4.3 editor and press F5
 ```
 
+There is also a **web build that installs as an app** (PWA) — see
+[Play in a browser](#play-in-a-browser-pwa).
+
 ## Controls
 
 | Action | Keys |
@@ -17,6 +20,37 @@ godot --path .          # or open the folder in the Godot 4.3 editor and press F
 | Dash (brief invulnerability) | `Space` / `Shift` |
 | Switch weapon | `Q` / `E` |
 | Pause | `Esc` |
+
+## Play in a browser (PWA)
+
+The project exports to Web, and the export is patched into a real installable
+PWA: manifest, icons, service worker, offline page. It is single-threaded, so it
+does **not** need `Cross-Origin-Opener-Policy` / `Cross-Origin-Embedder-Policy`
+headers and will run on any static host, including GitHub Pages, Netlify,
+Cloudflare Pages and itch.io.
+
+```bash
+godot --headless --path . --export-release "Web" build/web/index.html
+python3 tools/pwa_post_export.py build/web
+
+# local preview (service workers need http, not file://)
+python3 -m http.server 8000 --directory build/web
+# then open http://localhost:8000
+```
+
+The first load pulls a ~35 MB wasm bundle; after that the service worker serves
+it from cache and the game starts instantly, including offline. Install it from
+the browser's address bar ("Install") to get a standalone window and an icon.
+
+Two things to know: a **keyboard is required** (there are no touch controls),
+and the page must be served over **HTTPS or localhost** — service workers are
+refused on plain `http://` origins.
+
+`tools/pwa_post_export.py` does two things the raw export does not: it registers
+the service worker (Godot only does that for thread-enabled builds) and it
+prunes the worker's precache list, which otherwise lists `index.worker.js` in
+thread-less builds — one 404 there makes `cache.addAll()` reject and silently
+kills offline support.
 
 ## What is in the game
 
@@ -58,8 +92,10 @@ scripts/
   effects/     Spark, Explosion
   ui/          HUD, MainMenu, SettingsMenu, PauseMenu, ModSelect, GameOverScreen
   tools/       test_runner (headless smoke test), dump_sprites (art previews)
-scenes/        Main, MainMenu, SettingsMenu, TestRunner, tools/DumpSprites
+scenes/        Main, MainMenu, SettingsMenu, TestRunner, tools/{DumpSprites,SoakTest}
 shaders/       crt_palette_combined, player_glow, palette_shift
+web/           PWA icons + offline page (inputs to the web export)
+tools/         pwa_post_export.py, ci_install_godot.sh
 docs/          SPEC.md (the original brief), REVIEW.md (audit of that brief)
 ```
 
@@ -78,17 +114,32 @@ godot --headless --path . res://scenes/tools/DumpSprites.tscn
 
 The test runner exits non-zero on failure, so CI can gate on it.
 
-## Builds
+## Builds and releases
 
-`export_presets.cfg` defines Windows, Linux and macOS presets. Locally:
+`export_presets.cfg` defines four presets: Web, Linux, Windows and macOS.
+Export templates must be installed first (Editor → Manage Export Templates).
 
 ```bash
-godot --headless --path . --export-release "Linux/X11" build/NeonVelocity.x86_64
+godot --headless --path . --export-release "Linux/X11"      build/linux/NeonVelocity.x86_64
+godot --headless --path . --export-release "Windows Desktop" build/windows/NeonVelocity.exe
+godot --headless --path . --export-release "macOS"          build/macos/NeonVelocity.zip
+godot --headless --path . --export-release "Web"            build/web/index.html
 ```
 
-Export templates must be installed first (Editor → Manage Export Templates).
-`.github/workflows/build.yml` does this on a `v*` tag and attaches the three
-builds to a GitHub release.
+Everything is automated in `.github/workflows/build.yml`:
+
+| Trigger | What happens |
+|---------|--------------|
+| any push / PR | headless smoke test + 50-second soak test |
+| push to `main` | the above, then the Web build is patched into a PWA and deployed to GitHub Pages |
+| `v*` tag | the above, then Linux, Windows, macOS and Web are exported and attached to a GitHub release |
+| manual dispatch | same as a tag, without publishing a release |
+
+So shipping a new version is `git tag v1.1.0 && git push --tags`.
+
+Note on Pages: GitHub Pages needs a **public** repository on the free plan. On a
+private repo the Pages job is skipped by GitHub, and the web zip from the release
+can be dropped on any static host instead.
 
 ## Saves and replays
 

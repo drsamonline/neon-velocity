@@ -30,6 +30,12 @@ func _ready() -> void:
 	EventBus.settings_changed.connect(_on_setting_changed)
 	_show_fps = bool(SaveSystem.get_setting("visual", "show_fps", false))
 	_fps_label.visible = _show_fps
+	# The run starts before the HUD exists, so seed the labels from live state
+	# instead of waiting for the next signal.
+	_on_score_changed(int(GameManager.run_data.get("score", 0)), int(GameManager.run_data.get("combo", 0)))
+	_on_currency_changed(int(GameManager.run_data.get("currency", 0)))
+	_on_weapon_changed(WeaponSystem.current_weapon, WeaponSystem.level)
+	_on_xp_changed(WeaponSystem.xp, WeaponSystem.XP_PER_LEVEL)
 
 
 func _build() -> void:
@@ -53,9 +59,9 @@ func _build() -> void:
 	_mods_label = _make_label(root, Vector2(24, 692), 15, Color(0.7, 0.7, 0.9))
 	_mods_label.size = Vector2(700, 22)
 
-	_health_bar = _make_bar(root, Vector2(24, 596), Vector2(260, 18), Color(1.0, 0.35, 0.42))
-	_shield_bar = _make_bar(root, Vector2(24, 616), Vector2(260, 10), Color(0.35, 0.75, 1.0))
-	_xp_bar = _make_bar(root, Vector2(24, 628), Vector2(260, 6), ACCENT)
+	_health_bar = _make_bar(root, Vector2(24, 578), Vector2(260, 18), Color(1.0, 0.35, 0.42))
+	_shield_bar = _make_bar(root, Vector2(24, 602), Vector2(260, 8), Color(0.35, 0.75, 1.0))
+	_xp_bar = _make_bar(root, Vector2(24, 616), Vector2(260, 6), ACCENT)
 
 	_boss_box = VBoxContainer.new()
 	_boss_box.position = Vector2(390, 18)
@@ -93,6 +99,7 @@ func _make_label(parent: Node, pos: Vector2, size: int, color: Color) -> Label:
 func _make_bar(parent: Node, pos: Vector2, bar_size: Vector2, color: Color) -> ProgressBar:
 	var bar := ProgressBar.new()
 	bar.position = pos
+	bar.custom_minimum_size = bar_size
 	bar.size = bar_size
 	bar.show_percentage = false
 	bar.min_value = 0

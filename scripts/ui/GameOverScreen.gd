@@ -66,12 +66,14 @@ func _build(score: int, wave: int, stats: Dictionary) -> void:
 	var retry := Button.new()
 	retry.text = "RETRY"
 	retry.custom_minimum_size = Vector2(180, 46)
+	Style.style_button(retry)
 	retry.pressed.connect(_on_retry)
 	row.add_child(retry)
 
 	var menu := Button.new()
 	menu.text = "MENU"
 	menu.custom_minimum_size = Vector2(180, 46)
+	Style.style_button(menu)
 	menu.pressed.connect(_on_menu)
 	row.add_child(menu)
 

@@ -119,7 +119,7 @@ func _spawn_chunk(index: int) -> void:
 func _spawn_formation(chunk: Node2D, rng: RandomNumberGenerator, pattern: Dictionary, hp_scale: float, slot: int) -> void:
 	var count := rng.randi_range(int(pattern["count"][0]), int(pattern["count"][1]))
 	var base_x := 900.0 + slot * 700.0 + rng.randf_range(-100.0, 100.0)
-	var base_y := rng.randf_range(-220.0, 220.0)
+	var base_y := rng.randf_range(-170.0, 170.0)
 	var hp: float = float(pattern["hp"]) * hp_scale
 	var behaviour := String(pattern["behaviour"])
 	var elite: bool = bool(pattern.get("elite", false))

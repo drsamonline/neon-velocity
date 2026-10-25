@@ -26,6 +26,11 @@ Engine: **Godot 4.3.stable.official.77dcf97d8**, headless, `gl_compatibility`.
 | 15 | 50-second soak (chunk 0 → 7, boss at 4) | `SoakTest.tscn`, 3 consecutive runs | no errors, score 450–540, ~20 kills, 217 peak live bullets |
 | 16 | Pool growth under load | soak with 320 enemy + 220 player bullets preallocated | no "flushing queries" errors after the deferred-monitoring fix |
 | 17 | Exported Linux build boots | `build/linux/NeonVelocity.x86_64 --headless --quit-after 150` | clean |
+| 18 | Web export builds | `--export-release "Web"` + `tools/pwa_post_export.py` | 11 files, 35 MB wasm |
+| 19 | Web build boots in a real browser | headless Chrome 153 (SwiftShader WebGL2), waiting for the loading overlay to clear | booted, canvas live, no console errors |
+| 20 | Menu, gameplay, pause screens render | Puppeteer screenshots at 1280x720 | reviewed; contrast, parallax and HUD issues found and fixed |
+| 21 | PWA assets | manifest (standalone, 3 icons), service worker precache pruned to real files | present and consistent |
+| 22 | macOS export | `--export-release "macOS"` (unsigned, needs ETC2/ASTC enabled) | 51 MB .app.zip |
 
 ## Checklist
 
@@ -73,12 +78,24 @@ Engine: **Godot 4.3.stable.official.77dcf97d8**, headless, `gl_compatibility`.
 - [ ] Visual/audio review by eye and ear — **not possible in this environment**
       (no display server; art was checked as rendered PNGs instead)
 
+## What looking at it changed
+
+The web build made it possible to see the game for the first time (headless
+Chrome + screenshots). Four things were wrong and are now fixed:
+
+- default-theme buttons were near-invisible dark-on-dark -> shared `Style` helper
+- the mountain parallax layer painted a black wall over the playfield -> ridge
+  only, moved to the bottom of the screen
+- the HUD weapon/level labels were blank until the first weapon change, because
+  the run starts before the HUD exists -> the HUD seeds itself from live state
+- a straight horizontal shot missed anything above or below the ship, so a first
+  run scored nothing -> gentle 10-degree aim assist
+
 ## Known gaps, ranked
 
-1. **No display in the build environment.** Layout, the CRT pass and audio
-   mixing have not been seen or heard on a real screen. The logic behind them is
-   tested; the aesthetics are not. Open the project in the editor once and press
-   F5 — that is the one check nobody has done yet.
+1. **Audio has not been heard.** The mix, layer balance and the pad level were
+   never listened to — the game was only ever run headless or through a browser
+   with no sound output. Expect to nudge dB values after one listen.
 2. **Replays are write-only.** Files are complete but nothing plays them.
 3. **Export presets and CI are unverified.** Presets follow the documented
    format; the workflow downloads Godot and templates and runs the same headless

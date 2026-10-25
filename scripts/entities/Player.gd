@@ -43,14 +43,14 @@ func _ready() -> void:
 
 	_sprite = Sprite2D.new()
 	_sprite.texture = Art.texture("player_ship")
-	_sprite.scale = Vector2(2, 2)
+	_sprite.scale = Vector2(2.4, 2.4)
 	add_child(_sprite)
 
 	_thruster = Sprite2D.new()
 	_thruster.texture = Art.texture("spark")
 	_thruster.scale = Vector2(1.4, 1.0)
 	_thruster.modulate = Color(0.4, 0.8, 1.0, 0.9)
-	_thruster.position = Vector2(-34, 0)
+	_thruster.position = Vector2(-40, 0)
 	add_child(_thruster)
 
 	EventBus.weapon_changed.connect(_on_weapon_changed)
@@ -159,8 +159,13 @@ func _fire_projectiles(stats: Dictionary) -> void:
 	var count := int(stats.get("count", 1))
 	var spread := float(stats.get("spread", 0.0))
 	var muzzle := global_position + Vector2(34.0, 0.0)
+	# Gentle aim assist: the ship still has to line up, but a shot that is within
+	# ten degrees of an enemy bends onto it. Without this the game reads as
+	# broken on a first run, because a straight line misses anything a little
+	# above or below the ship.
+	var assist := _aim_assist_angle()
 	for i in count:
-		var angle := 0.0
+		var angle := assist
 		if count > 1:
 			angle = lerpf(-spread * 0.5, spread * 0.5, float(i) / float(count - 1))
 		var bullet := ObjectPool.acquire("bullet_player")
@@ -169,6 +174,26 @@ func _fire_projectiles(stats: Dictionary) -> void:
 		var shot := stats.duplicate(true)
 		shot["damage"] = _damage_with_ramp(int(stats["damage"]))
 		bullet.call("fire", muzzle, angle, shot, false)
+
+
+func _aim_assist_angle() -> float:
+	var nearest: Node2D = null
+	var best := 1400.0
+	for node in get_tree().get_nodes_in_group("enemies"):
+		if not (node is Node2D) or not is_instance_valid(node):
+			continue
+		var target := node as Node2D
+		var offset := target.global_position - global_position
+		if offset.x < 60.0:
+			continue
+		var distance := offset.length()
+		if distance < best:
+			best = distance
+			nearest = target
+	if nearest == null:
+		return 0.0
+	var angle := (nearest.global_position - global_position).angle()
+	return clampf(angle, -0.18, 0.18)
 
 
 func _damage_with_ramp(base: int) -> int:

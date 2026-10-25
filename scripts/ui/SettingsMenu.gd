@@ -62,6 +62,7 @@ func _build() -> void:
 	for i in GameManager.DIFFICULTIES.size():
 		_difficulty_option.add_item(String(GameManager.DIFFICULTIES[i]["name"]), i)
 	_difficulty_option.custom_minimum_size = Vector2(220, 34)
+	Style.style_option(_difficulty_option)
 	difficulty_row.add_child(_difficulty_option)
 
 	var buttons := HBoxContainer.new()
@@ -72,12 +73,14 @@ func _build() -> void:
 	var back := Button.new()
 	back.text = "BACK"
 	back.custom_minimum_size = Vector2(180, 44)
+	Style.style_button(back)
 	back.pressed.connect(_on_back)
 	buttons.add_child(back)
 
 	var reset := Button.new()
 	reset.text = "RESET TO DEFAULTS"
 	reset.custom_minimum_size = Vector2(220, 44)
+	Style.style_button(reset)
 	reset.pressed.connect(_on_reset)
 	buttons.add_child(reset)
 
@@ -118,6 +121,7 @@ func _check_row(parent: Node, label_text: String) -> CheckBox:
 	row.add_child(label)
 	var check := CheckBox.new()
 	check.custom_minimum_size = Vector2(40, 30)
+	check.add_theme_color_override("font_color", Style.TEXT)
 	row.add_child(check)
 	return check
 

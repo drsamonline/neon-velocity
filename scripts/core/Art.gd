@@ -348,10 +348,13 @@ func _mountains() -> Image:
 		y += rng.randi_range(-3, 3)
 		y = clampi(y, 40, 150)
 		heights[x] = y
+	# Ridge only: the area below stays transparent so the layer does not paint a
+	# black wall over the playfield.
 	for x in 512:
-		for yy in range(heights[x], 160):
-			var shade: Color = PALETTE[DARK_BLUE] if yy < heights[x] + 30 else PALETTE[BLACK]
-			img.set_pixel(x, yy, shade)
+		var top: int = heights[x]
+		for yy in range(top, mini(top + 26, 160)):
+			var fade: float = 1.0 - float(yy - top) / 26.0
+			img.set_pixel(x, yy, Color(0.10, 0.11, 0.20, fade * 0.9))
 	return img
 
 

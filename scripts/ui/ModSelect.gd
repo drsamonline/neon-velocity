@@ -53,6 +53,7 @@ func _build(choices: Array) -> void:
 		button.text = "%s\n%s" % [String(mod["name"]), String(mod["blurb"])]
 		button.custom_minimum_size = Vector2(500, 62)
 		button.add_theme_font_size_override("font_size", 18)
+		Style.style_button(button, Style.GOLD)
 		var id := String(mod_id)
 		button.pressed.connect(func() -> void: _choose(id))
 		box.add_child(button)

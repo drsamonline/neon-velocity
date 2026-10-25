@@ -22,12 +22,20 @@ func _build() -> void:
 	backdrop.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(backdrop)
 
+	var nebula := TextureRect.new()
+	nebula.texture = Art.texture("nebula")
+	nebula.stretch_mode = TextureRect.STRETCH_TILE
+	nebula.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
+	nebula.set_anchors_preset(Control.PRESET_FULL_RECT)
+	nebula.modulate = Color(0.8, 0.8, 1.0, 0.55)
+	add_child(nebula)
+
 	var stars := TextureRect.new()
 	stars.texture = Art.texture("starfield")
 	stars.stretch_mode = TextureRect.STRETCH_TILE
 	stars.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
 	stars.set_anchors_preset(Control.PRESET_FULL_RECT)
-	stars.modulate = Color(1, 1, 1, 0.5)
+	stars.modulate = Color(1, 1, 1, 0.9)
 	add_child(stars)
 
 	var title := Label.new()
@@ -65,6 +73,7 @@ func _build() -> void:
 		_difficulty_option.add_item(String(GameManager.DIFFICULTIES[i]["name"]), i)
 	_difficulty_option.selected = clampi(int(SaveSystem.get_setting("gameplay", "difficulty", 1)), 0, 3)
 	_difficulty_option.custom_minimum_size = Vector2(300, 44)
+	Style.style_option(_difficulty_option)
 	box.add_child(_difficulty_option)
 
 	var settings := _button(box, "SETTINGS")
@@ -97,6 +106,7 @@ func _button(parent: Node, text: String) -> Button:
 	button.text = text
 	button.custom_minimum_size = Vector2(300, 46)
 	button.add_theme_font_size_override("font_size", 22)
+	Style.style_button(button)
 	button.pressed.connect(func() -> void: AudioManager.play_sfx("ui_click"))
 	parent.add_child(button)
 	return button

@@ -51,6 +51,7 @@ func _button(parent: Node, text: String) -> Button:
 	button.text = text
 	button.custom_minimum_size = Vector2(300, 44)
 	button.add_theme_font_size_override("font_size", 20)
+	Style.style_button(button)
 	button.pressed.connect(func() -> void: AudioManager.play_sfx("ui_click"))
 	parent.add_child(button)
 	return button
