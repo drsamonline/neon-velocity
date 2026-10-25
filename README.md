@@ -1,5 +1,8 @@
 # Neon Velocity
 
+**Play in the browser:** <https://drsamonline.github.io/neon-velocity/> — it
+installs as an app (PWA) and works offline after the first load.
+
 A retro side-scrolling shooter for **Godot 4.3** where every sprite and every
 sound is generated at runtime. The repository contains no binary assets at all:
 no PNGs, no OGGs, no fonts — just GDScript, three shaders and two scene files.
