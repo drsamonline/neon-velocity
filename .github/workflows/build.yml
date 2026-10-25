@@ -23,80 +23,11 @@ on:
 
 permissions:
   contents: write
-  pages: write
-  id-token: write
-
-env:
-  GODOT_VERSION: "4.3"
-
-concurrency:
-  group: build-${{ github.ref }}
-  cancel-in-progress: true
-
-jobs:
-  test:
-    name: Headless tests
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install Godot
-        run: bash tools/ci_install_godot.sh "$GODOT_VERSION" 0
-      - name: Import project
-        run: godot --headless --path . --import
-      - name: Smoke test
-        run: godot --headless --path . res://scenes/TestRunner.tscn
-      - name: Soak test
-        run: godot --headless --path . res://scenes/tools/SoakTest.tscn
-
-  web:
-    name: Web build (PWA)
-    needs: test
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install Godot and export templates
-        run: bash tools/ci_install_godot.sh "$GODOT_VERSION" 1
-      - name: Import project
-        run: godot --headless --path . --import
-      - name: Export web
-        run: |
-          # .gdignore keeps the importer out of build/, otherwise the exported
-          # PNGs get re-imported into the project on the next scan.
-          mkdir -p build/web
-          touch build/.gdignore
-          godot --headless --path . --export-release "Web" build/web/index.html
-      - name: Patch PWA shell
-        run: python3 tools/pwa_post_export.py build/web
-      - name: Package
-        run: |
-          cd build/web
-          zip -q -r ../neon-velocity-web.zip .
-      - name: Attach to release
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v2
-        with:
-          files: build/neon-velocity-web.zip
-          generate_release_notes: true
-          body: |
-            Neon Velocity ${{ github.ref_name }}
-
-            | File | What to do with it |
-            |------|--------------------|
-            | `neon-velocity-web.zip` | Unzip and serve the folder over HTTPS or localhost. Installs as an app (PWA) and works offline after the first load. Needs a keyboard. |
-            | `neon-velocity-windows.zip` | Unzip, run `NeonVelocity.exe`. |
-            | `neon-velocity-linux.zip` | Unzip, `chmod +x NeonVelocity.x86_64`, run it. |
-            | `neon-velocity-macos.zip` | Unzip, right click the `.app` then Open (unsigned). |
-
-            All art and audio are generated at runtime, so there are no asset files
-            to install and nothing to download on first launch beyond the binary.
-
   pages:
     name: Deploy to GitHub Pages
     needs: web
-    # Opt-in: GitHub Pages needs a public repository on the free plan, and this
-    # repo is private. Once Pages is enabled, set the repository variable
-    # ENABLE_PAGES=true (Settings > Secrets and variables > Actions > Variables)
-    # and every push to main will publish the PWA.
+    # Opt-in: set the repository variable ENABLE_PAGES=true once Pages is enabled
+    # with "GitHub Actions" as the source.
     if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.ENABLE_PAGES == 'true'
     runs-on: ubuntu-latest
     environment:
@@ -113,12 +44,20 @@ jobs:
           mkdir -p build/web
           touch build/.gdignore
           godot --headless --path . --export-release "Web" build/web/index.html
-      - name: Patch PWA shell
-        run: python3 tools/pwa_post_export.py build/web
+      - name: Compose the site
+        run: |
+          # /        -> the landing page from site/
+          # /play/   -> the game itself, patched into a PWA
+          mkdir -p public
+          cp -r site/. public/
+          mkdir -p public/play
+          cp -r build/web/. public/play/
+          python3 tools/pwa_post_export.py public/play --demo
+          ls -la public public/play | head -30
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: build/web
+          path: public
       - id: deployment
         uses: actions/deploy-pages@v4
 

@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Neon Velocity — a procedurally generated retro shooter</title>
+<meta name="description" content="Neon Velocity is a retro side-scrolling shooter for Godot 4.3 where every sprite and every sound is generated at runtime. Play in the browser, install it as an app, or download a native build.">
+<meta name="theme-color" content="#05050d">
+<link rel="icon" href="assets/icons/icon-144.png" sizes="144x144">
+<link rel="apple-touch-icon" href="assets/icons/icon-180.png">
+<meta property="og:title" content="Neon Velocity">
+<meta property="og:description" content="A retro side-scrolling shooter with zero asset files: every sprite and sound is generated at runtime.">
+<meta property="og:image" content="assets/shots/boss.jpg">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #05050d;
+    --bg-2: #080912;
+    --panel: #0a0b16;
+    --panel-2: #0d0f1c;
+    --line: rgba(255, 255, 255, 0.09);
+    --line-strong: rgba(41, 173, 255, 0.35);
+    --text: #dfe6f5;
+    --dim: #8b93ad;
+    --cyan: #29adff;
+    --yellow: #ffec27;
+    --pink: #ff77a8;
+    --orange: #ef7d57;
+    --lavender: #83769c;
+    --green: #00e436;
+    --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --display: "Chakra Petch", "Segoe UI", system-ui, sans-serif;
+    --max: 1180px;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 15px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  /* Faint grid + starfield: atmosphere without a single gradient blob. */
+  #stars {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.55;
+  }
+
+  .grid-bg {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-image:
+      linear-gradient(to right, rgba(41, 173, 255, 0.045) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(41, 173, 255, 0.045) 1px, transparent 1px);
+    background-size: 64px 64px;
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 30%, transparent 100%);
+    -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 30%, transparent 100%);
+  }
+
+  .wrap {
+    position: relative;
+    z-index: 1;
+    max-width: var(--max);
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* ---------- header ---------- */
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    background: rgba(5, 5, 13, 0.88);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .bar {
+    max-width: var(--max);
+    margin: 0 auto;
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--display);
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    font-size: 15px;
+    color: var(--text);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .brand img { width: 26px; height: 26px; display: block; }
+
+  nav {
+    display: flex;
+    gap: 18px;
+    margin-left: auto;
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  nav a {
+    color: var(--dim);
+    text-decoration: none;
+    padding: 4px 0;
+    border-bottom: 1px solid transparent;
+  }
+
+  nav a:hover, nav a:focus-visible { color: var(--cyan); border-bottom-color: var(--cyan); }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--mono);
+    font-size: 13px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-decoration: none;
+    padding: 10px 18px;
+    border: 1px solid var(--line-strong);
+    color: var(--text);
+    background: transparent;
+    transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
+  }
+
+  .btn:hover, .btn:focus-visible {
+    background: rgba(41, 173, 255, 0.12);
+    border-color: var(--cyan);
+    color: #fff;
+  }
+
+  .btn--primary {
+    background: var(--cyan);
+    border-color: var(--cyan);
+    color: #04121c;
+    font-weight: 700;
+  }
+
+  .btn--primary:hover, .btn--primary:focus-visible {
+    background: #6cc6ff;
+    border-color: #6cc6ff;
+    color: #04121c;
+  }
+
+  .btn--ghost { border-color: var(--line); color: var(--dim); }
+
+  /* ---------- hero ---------- */
+  .hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+    gap: 48px;
+    align-items: center;
+    padding: 64px 0 40px;
+  }
+
+  .eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--cyan);
+    margin: 0 0 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .eyebrow::before {
+    content: "";
+    width: 26px;
+    height: 1px;
+    background: var(--cyan);
+    display: block;
+  }
+
+  h1 {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: clamp(44px, 7vw, 84px);
+    line-height: 0.92;
+    letter-spacing: 0.02em;
+    margin: 0 0 20px;
+    color: #fff;
+    text-shadow: 4px 4px 0 rgba(255, 119, 168, 0.55), 8px 8px 0 rgba(41, 173, 255, 0.18);
+  }
+
+  .lede {
+    font-size: 17px;
+    color: var(--dim);
+    max-width: 44ch;
+    margin: 0 0 26px;
+  }
+
+  .lede strong { color: var(--text); font-weight: 500; }
+
+  .cta-row { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 26px; }
+
+  .spec-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--dim);
+  }
+
+  .chip {
+    border: 1px solid var(--line);
+    padding: 5px 10px;
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  .chip b { color: var(--yellow); font-weight: 500; }
+
+  /* screenshot frame — an arcade bezel, not a rounded card */
+  .frame {
+    position: relative;
+    border: 1px solid var(--line-strong);
+    background: #000;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.8), 18px 18px 0 rgba(41, 173, 255, 0.06);
+  }
+
+  .frame img { display: block; width: 100%; height: auto; }
+
+  .frame::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(to bottom, rgba(0, 0, 0, 0.22) 0 1px, transparent 1px 3px);
+    opacity: 0.5;
+  }
+
+  .frame__bar {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 7px 12px;
+    border-top: 1px solid var(--line);
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--dim);
+    background: var(--bg-2);
+  }
+
+  .frame__bar span:last-child { color: var(--cyan); }
+
+  /* ---------- marquee ---------- */
+  .marquee {
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    background: var(--bg-2);
+    overflow: hidden;
+  }
+
+  .marquee__track {
+    display: flex;
+    width: max-content;
+    animation: marquee 38s linear infinite;
+  }
+
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+
+  .marquee:hover .marquee__track { animation-play-state: paused; }
+
+  .marquee__inner {
+    display: flex;
+    gap: 44px;
+    padding: 12px 24px;
+    white-space: nowrap;
+    font-size: 11px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--lavender);
+  }
+
+  .marquee__inner b { color: var(--cyan); font-weight: 500; }
+
+  /* ---------- sections ---------- */
+  section { padding: 72px 0; }
+
+  .sec-head {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    margin-bottom: 34px;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 14px;
+  }
+
+  .sec-num {
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: var(--pink);
+  }
+
+  h2 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: clamp(24px, 3vw, 32px);
+    letter-spacing: 0.02em;
+    margin: 0;
+    color: #fff;
+  }
+
+  .sec-head p {
+    margin: 0 0 0 auto;
+    color: var(--dim);
+    font-size: 13px;
+    max-width: 42ch;
+    text-align: right;
+  }
+
+  /* features */
+  .features {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+  }
+
+  .feature {
+    background: var(--panel);
+    padding: 26px 24px 24px;
+    min-width: 0;
+  }
+
+  .feature svg { display: block; margin-bottom: 16px; }
+
+  .feature h3 {
+    font-family: var(--display);
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    margin: 0 0 8px;
+    color: #fff;
+  }
+
+  .feature p { margin: 0; color: var(--dim); font-size: 13.5px; }
+
+  .feature em { color: var(--cyan); font-style: normal; }
+
+  /* gallery */
+  .gallery {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 22px;
+  }
+
+  .gallery figure { margin: 0; min-width: 0; }
+
+  .gallery figure.wide { grid-column: 1 / -1; }
+
+  .gallery a { display: block; border: 1px solid var(--line); background: #000; }
+  .gallery a:hover { border-color: var(--line-strong); }
+  .gallery img { display: block; width: 100%; height: auto; }
+
+  figcaption {
+    font-size: 11.5px;
+    letter-spacing: 0.08em;
+    color: var(--dim);
+    padding: 8px 2px 0;
+    text-transform: uppercase;
+  }
+
+  figcaption b { color: var(--text); font-weight: 500; }
+
+  /* controls */
+  .controls {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+  }
+
+  .controls > div { background: var(--panel); padding: 24px; min-width: 0; }
+
+  .controls h3 {
+    font-family: var(--display);
+    font-size: 15px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin: 0 0 16px;
+    color: var(--yellow);
+  }
+
+  dl { display: grid; grid-template-columns: auto 1fr; gap: 10px 18px; margin: 0; }
+
+  dt { color: var(--text); font-size: 12.5px; }
+  dd { margin: 0; color: var(--dim); font-size: 12.5px; }
+
+  kbd {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    border: 1px solid var(--line-strong);
+    border-bottom-width: 2px;
+    padding: 2px 7px;
+    color: var(--cyan);
+    background: rgba(41, 173, 255, 0.07);
+  }
+
+  /* downloads */
+  .downloads {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+  }
+
+  .download {
+    background: var(--panel);
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+    text-decoration: none;
+    color: inherit;
+    transition: background 120ms ease;
+  }
+
+  .download:hover { background: var(--panel-2); }
+
+  .download .os {
+    font-family: var(--display);
+    font-size: 16px;
+    letter-spacing: 0.08em;
+    color: #fff;
+  }
+
+  .download .meta { font-size: 11px; color: var(--dim); letter-spacing: 0.06em; }
+
+  .download .arrow { margin-top: 10px; font-size: 11px; letter-spacing: 0.14em; color: var(--cyan); text-transform: uppercase; }
+
+  .download--featured { background: rgba(41, 173, 255, 0.07); }
+  .download--featured .os { color: var(--cyan); }
+
+  .note {
+    border-left: 2px solid var(--yellow);
+    background: rgba(255, 236, 39, 0.04);
+    padding: 14px 18px;
+    margin-top: 22px;
+    font-size: 12.5px;
+    color: var(--dim);
+  }
+
+  .note b { color: var(--yellow); font-weight: 500; }
+
+  /* how it works */
+  .build {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    gap: 40px;
+    align-items: start;
+  }
+
+  .build p { color: var(--dim); margin: 0 0 16px; }
+  .build p strong { color: var(--text); font-weight: 500; }
+
+  .steps { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+
+  .steps li {
+    display: grid;
+    grid-template-columns: 34px 1fr;
+    gap: 14px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .steps .n { color: var(--pink); font-size: 11px; letter-spacing: 0.14em; padding-top: 3px; }
+  .steps h4 { margin: 0 0 3px; font-family: var(--display); font-size: 14px; letter-spacing: 0.05em; color: #fff; }
+  .steps span { color: var(--dim); font-size: 12.5px; }
+
+  code {
+    font-family: var(--mono);
+    font-size: 12.5px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--line);
+    padding: 1px 6px;
+    color: var(--yellow);
+  }
+
+  /* footer */
+  footer {
+    border-top: 1px solid var(--line);
+    padding: 34px 0 48px;
+    background: var(--bg-2);
+  }
+
+  .foot {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11.5px;
+    letter-spacing: 0.08em;
+    color: var(--dim);
+  }
+
+  .foot a { color: var(--dim); text-decoration: none; border-bottom: 1px solid var(--line); }
+  .foot a:hover { color: var(--cyan); border-bottom-color: var(--cyan); }
+
+  .foot-links { display: flex; gap: 18px; flex-wrap: wrap; }
+
+  /* responsive */
+  @media (max-width: 980px) {
+    .hero { grid-template-columns: minmax(0, 1fr); gap: 34px; padding-top: 44px; }
+    .features { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .downloads { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .build { grid-template-columns: minmax(0, 1fr); }
+    .sec-head { flex-wrap: wrap; }
+    .sec-head p { margin: 0; text-align: left; }
+  }
+
+  @media (max-width: 640px) {
+    nav { display: none; }
+    .features, .gallery, .controls, .downloads { grid-template-columns: minmax(0, 1fr); }
+    h1 { text-shadow: 3px 3px 0 rgba(255, 119, 168, 0.55); }
+    section { padding: 52px 0; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    #stars { display: none; }
+    .marquee__track { animation: none; }
+  }
+</style>
+</head>
+<body>
+<canvas id="stars" aria-hidden="true"></canvas>
+<div class="grid-bg" aria-hidden="true"></div>
+
+<header>
+  <div class="bar">
+    <a class="brand" href="./"><img src="assets/icons/mark.svg" alt="">NEON VELOCITY</a>
+    <nav>
+      <a href="#features">Features</a>
+      <a href="#screens">Screens</a>
+      <a href="#controls">Controls</a>
+      <a href="#download">Download</a>
+      <a href="#build">How it's built</a>
+    </nav>
+    <a class="btn btn--primary" href="play/">Play now</a>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="hero" style="padding-bottom:48px">
+    <div>
+      <p class="eyebrow">Godot 4.3 · MIT · zero asset files</p>
+      <h1>NEON<br>VELOCITY</h1>
+      <p class="lede">
+        A retro side-scrolling shooter where <strong>every sprite is rasterised and every sound is
+        synthesised at runtime</strong>. No PNGs, no OGGs, no fonts — the repository is pure code,
+        and the game draws itself the moment it starts.
+      </p>
+      <div class="cta-row">
+        <a class="btn btn--primary" href="play/">Play in browser</a>
+        <a class="btn" href="#download">Download builds</a>
+        <a class="btn btn--ghost" href="https://github.com/drsamonline/neon-velocity">Source</a>
+      </div>
+      <div class="spec-row">
+        <span class="chip"><b>6</b> weapons</span>
+        <span class="chip"><b>18</b> mods</span>
+        <span class="chip"><b>4</b> bosses</span>
+        <span class="chip"><b>24</b> sfx</span>
+        <span class="chip"><b>0</b> assets</span>
+      </div>
+    </div>
+
+    <figure class="frame" style="margin:0">
+      <img src="assets/shots/action.jpg" width="1600" height="900"
+           alt="Neon Velocity gameplay: the player ship firing a long stream of plasma bolts into a formation of orange drones.">
+      <figcaption class="frame__bar"><span>chunk_03 · plasma cannon</span><span>1080p capture</span></figcaption>
+    </figure>
+  </section>
+
+  <div class="marquee" aria-hidden="true">
+  <div class="marquee__track">
+    <div class="marquee__inner">
+      <span><b>runtime art</b> — 17 procedural sprites</span>
+      <span><b>runtime audio</b> — PCM synthesis, 4-layer music</span>
+      <span><b>seeded chunks</b> — same seed, same run</span>
+      <span><b>offline pwa</b> — installs from the browser</span>
+      <span><b>32</b> — automated checks in CI</span>
+    </div>
+    <div class="marquee__inner">
+      <span><b>runtime art</b> — 17 procedural sprites</span>
+      <span><b>runtime audio</b> — PCM synthesis, 4-layer music</span>
+      <span><b>seeded chunks</b> — same seed, same run</span>
+      <span><b>offline pwa</b> — installs from the browser</span>
+      <span><b>32</b> — automated checks in CI</span>
+    </div>
+  </div>
+</div>
+
+  <section id="features">
+    <div class="sec-head">
+      <span class="sec-num">01</span>
+      <h2>What's in the game</h2>
+      <p>Six weapons with five levels each, eighteen mods, endless procedural levels and four bosses on a five-chunk cycle.</p>
+    </div>
+
+    <div class="features">
+      <div class="feature">
+        <svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="#29adff" stroke-width="1.6" aria-hidden="true">
+          <path d="M2 13h16M18 13l-5-5M18 13l-5 5"/><circle cx="22" cy="13" r="2.5"/>
+        </svg>
+        <h3>Six weapons</h3>
+        <p>Plasma cannon, spread shot, laser lance, seeker missiles, railgun and nova burst. Each levels up from kills — <em>XP is earned, not bought</em>.</p>
+      </div>
+      <div class="feature">
+        <svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="#ffec27" stroke-width="1.6" aria-hidden="true">
+          <rect x="3" y="3" width="8" height="8"/><rect x="15" y="3" width="8" height="8"/>
+          <rect x="3" y="15" width="8" height="8"/><rect x="15" y="15" width="8" height="8" stroke-dasharray="2 2"/>
+        </svg>
+        <h3>Eighteen mods</h3>
+        <p>Chain lightning, ricochet, life siphon, MIRV splits, EMP slows, pulsar novas. Picking one pauses the run and offers three cards.</p>
+      </div>
+      <div class="feature">
+        <svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="#ff77a8" stroke-width="1.6" aria-hidden="true">
+          <path d="M2 20c4-9 8-9 11 0M13 20c4-9 8-9 11 0"/><circle cx="13" cy="6" r="3"/>
+        </svg>
+        <h3>Endless, seeded levels</h3>
+        <p>The world is a strip of 2400-unit chunks generated from <em>seed + chunk index</em>, so a given seed always produces the same run.</p>
+      </div>
+      <div class="feature">
+        <svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="#ef7d57" stroke-width="1.6" aria-hidden="true">
+          <circle cx="13" cy="13" r="4"/><circle cx="13" cy="13" r="9" stroke-dasharray="3 3"/>
+          <path d="M13 1v3M13 22v3M1 13h3M22 13h3"/>
+        </svg>
+        <h3>Four bosses</h3>
+        <p>Core Interceptor, Void Warden, Neon Titan and The Architect — each with its own patterns and a phase change every quarter of its health.</p>
+      </div>
+      <div class="feature">
+        <svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="#00e436" stroke-width="1.6" aria-hidden="true">
+          <path d="M3 18V9l5-4 5 4v9M13 18V6l5 3v9M23 18v-6l-5-2"/><path d="M1 21h24"/>
+        </svg>
+        <h3>Nothing to install</h3>
+        <p>Sprites come out of the <em>Image</em> API in a fixed 16-colour palette; sound effects are packed into <em>AudioStreamWAV</em> from float buffers.</p>
+      </div>
+      <div class="feature">
+        <svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="#83769c" stroke-width="1.6" aria-hidden="true">
+          <path d="M4 20V10M10 20V6M16 20v-7M22 20V3"/><path d="M1 23h24"/>
+        </svg>
+        <h3>Adaptive audio</h3>
+        <p>Four synthesised layers — bass, lead, pad, drums — crossfade as you get deeper into a run, over 24 procedural effects.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="screens">
+    <div class="sec-head">
+      <span class="sec-num">02</span>
+      <h2>Screens</h2>
+      <p>Captured from the web build running in Chromium at 1920×1080. Click any frame for the full-size PNG.</p>
+    </div>
+
+    <div class="gallery">
+      <figure class="wide">
+        <a href="assets/shots/action.jpg"><img src="assets/shots/action.jpg" width="1600" height="900" loading="lazy"
+          alt="Combat: the ship firing a long line of cyan plasma bolts at a formation of orange drones, with pickups drifting nearby."></a>
+        <figcaption><b>Combat</b> — plasma bolts, drone formation, health and shield in the top-left panel</figcaption>
+      </figure>
+      <figure>
+        <a href="assets/shots/boss.jpg"><img src="assets/shots/boss.jpg" width="1600" height="900" loading="lazy"
+          alt="The Core Interceptor boss health bar across the top of the screen while the player fights through drones."></a>
+        <figcaption><b>Boss</b> — the Core Interceptor, four phases, five-chunk cycle</figcaption>
+      </figure>
+      <figure>
+        <a href="assets/shots/swarm.jpg"><img src="assets/shots/swarm.jpg" width="1600" height="900" loading="lazy"
+          alt="A swarm of drones converging from the right while the player ship threads between them."></a>
+        <figcaption><b>Swarm</b> — formations converge from the right</figcaption>
+      </figure>
+      <figure>
+        <a href="assets/shots/pause.jpg"><img src="assets/shots/pause.jpg" width="1600" height="900" loading="lazy"
+          alt="The pause menu, with resume, restart, settings and quit, over the frozen game."></a>
+        <figcaption><b>Pause</b> — restart, settings, quit to menu</figcaption>
+      </figure>
+      <figure>
+        <a href="assets/shots/menu.jpg"><img src="assets/shots/menu.jpg" width="1600" height="900" loading="lazy"
+          alt="The title screen: NEON VELOCITY in cyan with a pink offset shadow, over a starfield."></a>
+        <figcaption><b>Title</b> — difficulty select and best score, drawn with the game's own generated textures</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section id="controls">
+    <div class="sec-head">
+      <span class="sec-num">03</span>
+      <h2>Controls</h2>
+      <p>The same build plays with a keyboard or with two thumbs; the on-screen controls only appear when a touchscreen is present.</p>
+    </div>
+
+    <div class="controls">
+      <div>
+        <h3>Keyboard &amp; mouse</h3>
+        <dl>
+          <dt><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> / arrows</dt><dd>Move</dd>
+          <dt><kbd>Z</kbd> / left click</dt><dd>Fire (hold)</dd>
+          <dt><kbd>Space</kbd> / <kbd>Shift</kbd></dt><dd>Dash — brief invulnerability</dd>
+          <dt><kbd>Q</kbd> / <kbd>E</kbd></dt><dd>Switch weapon</dd>
+          <dt><kbd>Esc</kbd></dt><dd>Pause</dd>
+        </dl>
+      </div>
+      <div>
+        <h3>Touch</h3>
+        <dl>
+          <dt>Left half</dt><dd>Floating stick — drag anywhere to fly</dd>
+          <dt><kbd>FIRE</kbd></dt><dd>Hold to fire</dd>
+          <dt><kbd>DASH</kbd></dt><dd>Dash</dd>
+          <dt><kbd>WPN</kbd></dt><dd>Next weapon</dd>
+          <dt>Top-right</dt><dd>Pause</dd>
+        </dl>
+        <p style="color:var(--dim);font-size:12.5px;margin:14px 0 0">
+          Play in landscape. Portrait shows a rotate prompt, and the first tap on the web build asks for fullscreen.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section id="download">
+    <div class="sec-head">
+      <span class="sec-num">04</span>
+      <h2>Get it</h2>
+      <p>Every build is produced by CI on a version tag — web, Linux, Windows and macOS are attached to the same release.</p>
+    </div>
+
+    <div class="downloads">
+      <a class="download download--featured" href="play/">
+        <span class="os">Browser</span>
+        <span class="meta">wasm · installs as an app · works offline</span>
+        <span class="arrow">Play now →</span>
+      </a>
+      <a class="download" href="https://github.com/drsamonline/neon-velocity/releases/latest/download/neon-velocity-windows.zip">
+        <span class="os">Windows</span>
+        <span class="meta">x86_64 · zip · 30 MB</span>
+        <span class="arrow">Download →</span>
+      </a>
+      <a class="download" href="https://github.com/drsamonline/neon-velocity/releases/latest/download/neon-velocity-linux.zip">
+        <span class="os">Linux</span>
+        <span class="meta">x86_64 · zip · 24 MB</span>
+        <span class="arrow">Download →</span>
+      </a>
+      <a class="download" href="https://github.com/drsamonline/neon-velocity/releases/latest/download/neon-velocity-macos.zip">
+        <span class="os">macOS</span>
+        <span class="meta">universal · zip · 51 MB</span>
+        <span class="arrow">Download →</span>
+      </a>
+    </div>
+
+    <p class="note">
+      <b>Unsigned binaries.</b> The desktop builds are not code-signed — Windows SmartScreen and macOS
+      Gatekeeper will both ask you to confirm. On macOS, right-click the app and choose Open the first
+      time. The web build needs a keyboard and a desktop-class browser.
+    </p>
+  </section>
+
+  <section id="build">
+    <div class="sec-head">
+      <span class="sec-num">05</span>
+      <h2>How it's built</h2>
+      <p>A Godot 4.3 project with no assets, no network calls and no plugins, plus a pipeline that tests and ships it.</p>
+    </div>
+
+    <div class="build">
+      <div>
+        <p>
+          The brief this came from promised a shooter with zero external assets, and the interesting
+          part is that it is <strong>literally true</strong>: the repository contains GDScript, three shaders,
+          five scene files and two tools. Everything you see on screen is generated by
+          <code>scripts/core/Art.gd</code> at startup — polygons rasterised into an
+          <code>Image</code>, quantised to a 16-colour CGA-style palette, wrapped in an
+          <code>ImageTexture</code>.
+        </p>
+        <p>
+          Audio works the same way. <code>scripts/core/AudioManager.gd</code> synthesises FM tones,
+          sweeps, noise bursts and arpeggios into float buffers and packs them into 16-bit PCM
+          <code>AudioStreamWAV</code> resources. The four music layers are 6.857-second loops at 140 BPM
+          — four bars — mixed live as the run gets deeper.
+        </p>
+        <p>
+          Systems talk through a signal bus rather than reaching into each other, bullets and enemies
+          are pooled, and the level generator is seeded, so the same seed replays the same chunk layout.
+        </p>
+        <p>
+          <a class="btn btn--ghost" href="https://github.com/drsamonline/neon-velocity">Read the source</a>
+        </p>
+      </div>
+
+      <ol class="steps">
+        <li><span class="n">01</span><div><h4>Runtime art</h4><span>17 sprite generators — ships, drones, the boss core, pickups, starfield, nebula, mountain ridge.</span></div></li>
+        <li><span class="n">02</span><div><h4>Runtime audio</h4><span>24 effects plus four music layers, all synthesised into PCM at startup in well under a second.</span></div></li>
+        <li><span class="n">03</span><div><h4>Tested in CI</h4><span>32 headless assertions drive a real run, and a 50-second soak reaches the first boss. Both gate every push.</span></div></li>
+        <li><span class="n">04</span><div><h4>One command to ship</h4><span><code>git tag v1.1.0 &amp;&amp; git push --tags</code> builds four platforms and publishes the release.</span></div></li>
+      </ol>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <span>NEON VELOCITY · MIT · built with Godot 4.3</span>
+    <div class="foot-links">
+      <a href="https://github.com/drsamonline/neon-velocity">GitHub</a>
+      <a href="https://github.com/drsamonline/neon-velocity/releases">Releases</a>
+      <a href="https://github.com/drsamonline/neon-velocity/blob/main/docs/REVIEW.md">Spec review</a>
+      <a href="play/">Play</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // A slow starfield. Static when the visitor prefers reduced motion.
+  (function () {
+    var canvas = document.getElementById('stars');
+    if (!canvas || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    var ctx = canvas.getContext('2d');
+    var stars = [];
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+    function resize() {
+      canvas.width = window.innerWidth * dpr;
+      canvas.height = window.innerHeight * dpr;
+      var count = Math.round((window.innerWidth * window.innerHeight) / 12000);
+      stars = [];
+      for (var i = 0; i < count; i++) {
+        stars.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          r: (Math.random() * 1.1 + 0.25) * dpr,
+          v: (Math.random() * 0.12 + 0.03) * dpr,
+          a: Math.random() * 0.5 + 0.15
+        });
+      }
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (var i = 0; i < stars.length; i++) {
+        var s = stars[i];
+        s.x -= s.v;
+        if (s.x < 0) { s.x = canvas.width; s.y = Math.random() * canvas.height; }
+        ctx.fillStyle = 'rgba(200, 225, 255,' + s.a + ')';
+        ctx.fillRect(s.x, s.y, s.r, s.r);
+      }
+      requestAnimationFrame(draw);
+    }
+
+    resize();
+    window.addEventListener('resize', resize);
+    draw();
+  })();
+</script>
+</body>
+</html>

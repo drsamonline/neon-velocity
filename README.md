@@ -1,7 +1,24 @@
+[![build](https://img.shields.io/github/actions/workflow/status/drsamonline/neon-velocity/build.yml?branch=main&style=flat-square&label=build&color=29adff)](https://github.com/drsamonline/neon-velocity/actions/workflows/build.yml)
+[![release](https://img.shields.io/github/v/release/drsamonline/neon-velocity?style=flat-square&color=ffec27)](https://github.com/drsamonline/neon-velocity/releases)
+[![license](https://img.shields.io/badge/license-MIT-ff77a8?style=flat-square)](LICENSE)
+[![godot](https://img.shields.io/badge/godot-4.3-478cbf?style=flat-square)](https://godotengine.org)
+[![platforms](https://img.shields.io/badge/platforms-web%20%C2%B7%20windows%20%C2%B7%20linux%20%C2%B7%20macos-83769c?style=flat-square)](#downloads)
+[![PWA](https://img.shields.io/badge/PWA-installable%20%C2%B7%20offline-00e436?style=flat-square)](https://drsamonline.github.io/neon-velocity/)
+
 # Neon Velocity
 
-**Play in the browser:** <https://drsamonline.github.io/neon-velocity/> — it
+**Play in the browser:** <https://drsamonline.github.io/neon-velocity/play/> — it
 installs as an app (PWA) and works offline after the first load.
+**Landing page:** <https://drsamonline.github.io/neon-velocity/>
+
+![Gameplay](site/assets/shots/action.jpg)
+
+| | |
+|---|---|
+| ![Boss fight](site/assets/shots/boss.jpg) | ![Swarm](site/assets/shots/swarm.jpg) |
+| The Core Interceptor, first of four bosses | Drone formations converging |
+| ![Title screen](site/assets/shots/menu.jpg) | ![Pause menu](site/assets/shots/pause.jpg) |
+| Title screen, difficulty select | Pause menu |
 
 A retro side-scrolling shooter for **Godot 4.3** where every sprite and every
 sound is generated at runtime. The repository contains no binary assets at all:

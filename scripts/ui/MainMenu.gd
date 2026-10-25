@@ -81,11 +81,11 @@ func _build() -> void:
 	box.add_child(best)
 
 	var hint := Label.new()
-	hint.text = "WASD / arrows move   ·   Z or click fires   ·   Space dashes   ·   Q / E weapon   ·   Esc pauses\non a phone: left thumb moves, right thumb fires"
+	hint.text = "WASD / arrows move   ·   Z or click fires   ·   Space dashes   ·   Q / E weapon   ·   Esc pauses"
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	hint.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
-	hint.offset_top = -58
-	hint.offset_bottom = -12
+	hint.offset_top = -46
+	hint.offset_bottom = -14
 	hint.offset_left = 24
 	hint.offset_right = -24
 	hint.add_theme_font_size_override("font_size", 15)

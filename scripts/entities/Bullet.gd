@@ -44,12 +44,12 @@ func _ready() -> void:
 	# projectiles read against a dark background.
 	_glow = Sprite2D.new()
 	_glow.texture = Art.texture("bullet_player")
-	_glow.scale = Vector2(4.2, 4.2)
-	_glow.modulate = Color(1, 1, 1, 0.22)
+	_glow.scale = Vector2(2.6, 3.4)
+	_glow.modulate = Color(1, 1, 1, 0.16)
 	add_child(_glow)
 	_sprite = Sprite2D.new()
 	_sprite.texture = Art.texture("bullet_player")
-	_sprite.scale = Vector2(2.2, 2.2)
+	_sprite.scale = Vector2(2.3, 2.3)
 	add_child(_sprite)
 	body_entered.connect(_on_body_entered)
 
@@ -90,14 +90,14 @@ func fire(pos: Vector2, angle: float, stats: Dictionary, hostile: bool = false) 
 		_sprite.modulate = Color.WHITE
 		_sprite.scale = Vector2(1.9, 1.9)
 		_glow.texture = Art.texture("bullet_enemy")
-		_glow.scale = Vector2(3.4, 3.4)
+		_glow.scale = Vector2(2.6, 2.6)
 		_glow.modulate = Color(1.0, 0.4, 0.4, 0.30)
 	else:
 		collision_layer = 1 << (LAYER_PLAYER_BULLET - 1)
 		collision_mask = 1 << (LAYER_ENEMY - 1)
 		var is_missile: bool = stats.get("id", "") == "missile"
 		_sprite.texture = Art.texture("missile" if is_missile else "bullet_player")
-		_sprite.scale = Vector2(2.2, 2.2) if not is_missile else Vector2(1.9, 1.9)
+		_sprite.scale = Vector2(2.3, 2.3) if not is_missile else Vector2(1.9, 1.9)
 		_sprite.modulate = stats.get("color", Color.WHITE)
 		_glow.texture = _sprite.texture
 		_glow.scale = _sprite.scale * 2.0

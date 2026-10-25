@@ -50,12 +50,25 @@ func _build() -> void:
 	# --- top left: score, combo, then health and the weapon line ---
 	# Everything lives in the top-left corner because the bottom-left belongs to
 	# the thumbstick on a phone.
+	# A dark panel behind the status block: the world is busy and text on top of
+	# it was hard to read.
+	var panel := PanelContainer.new()
+	panel.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	panel.position = Vector2(12, 8)
+	panel.custom_minimum_size = Vector2(272, 0)
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var panel_style := StyleBoxFlat.new()
+	panel_style.bg_color = Color(0.02, 0.02, 0.06, 0.55)
+	panel_style.border_color = Color(0.29, 0.68, 1.0, 0.25)
+	panel_style.set_border_width_all(1)
+	panel_style.set_corner_radius_all(2)
+	panel_style.set_content_margin_all(10.0)
+	panel.add_theme_stylebox_override("panel", panel_style)
+	root.add_child(panel)
+
 	var top_left := VBoxContainer.new()
-	top_left.set_anchors_preset(Control.PRESET_TOP_LEFT)
-	top_left.position = Vector2(24, 14)
-	top_left.offset_right = 304
 	top_left.add_theme_constant_override("separation", 2)
-	root.add_child(top_left)
+	panel.add_child(top_left)
 	_score_label = _make_label(top_left, 30, ACCENT)
 	_score_label.text = "SCORE 000000"
 	_combo_label = _make_label(top_left, 22, GOLD)
@@ -74,9 +87,9 @@ func _build() -> void:
 	gap.custom_minimum_size = Vector2(0, 8)
 	top_left.add_child(gap)
 
-	_health_bar = _make_bar(top_left, Color(1.0, 0.35, 0.42), 16)
-	_shield_bar = _make_bar(top_left, Color(0.35, 0.75, 1.0), 8)
-	_xp_bar = _make_bar(top_left, ACCENT, 6)
+	_health_bar = _make_bar(top_left, Color(1.0, 0.35, 0.42), 11)
+	_shield_bar = _make_bar(top_left, Color(0.35, 0.75, 1.0), 5)
+	_xp_bar = _make_bar(top_left, ACCENT, 4)
 	_weapon_label = _make_label(top_left, 22, Color.WHITE)
 	_level_label = _make_label(top_left, 18, ACCENT)
 	_mods_label = _make_label(top_left, 14, Color(0.7, 0.7, 0.9))
@@ -137,8 +150,10 @@ func _make_bar(parent: Node, color: Color, height: int) -> ProgressBar:
 	fill.bg_color = color
 	fill.set_corner_radius_all(2)
 	var back := StyleBoxFlat.new()
-	back.bg_color = Color(0.05, 0.05, 0.1, 0.85)
-	back.set_corner_radius_all(2)
+	back.bg_color = Color(0.04, 0.04, 0.09, 0.9)
+	back.border_color = Color(1, 1, 1, 0.12)
+	back.set_border_width_all(1)
+	back.set_corner_radius_all(1)
 	bar.add_theme_stylebox_override("fill", fill)
 	bar.add_theme_stylebox_override("background", back)
 	parent.add_child(bar)
@@ -192,7 +207,7 @@ func _on_shield_changed(current: int, maximum: int) -> void:
 
 func _on_weapon_changed(weapon_id: String, level: int) -> void:
 	var definition: Dictionary = WeaponSystem.WEAPONS[weapon_id]
-	_weapon_label.text = "%s · %s" % [String(definition["name"]).to_upper(), String(definition["blurb"])]
+	_weapon_label.text = String(definition["name"]).to_upper()
 	_level_label.text = "LV %d" % level
 
 

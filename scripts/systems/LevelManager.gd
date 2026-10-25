@@ -99,7 +99,7 @@ func _spawn_chunk(index: int) -> void:
 		return
 
 	# One or two formations per chunk.
-	var formation_count := rng.randi_range(1, 2)
+	var formation_count := rng.randi_range(2, 3)
 	for f in formation_count:
 		var valid: Array = []
 		for pattern in PATTERNS:
@@ -118,7 +118,7 @@ func _spawn_chunk(index: int) -> void:
 
 func _spawn_formation(chunk: Node2D, rng: RandomNumberGenerator, pattern: Dictionary, hp_scale: float, slot: int) -> void:
 	var count := rng.randi_range(int(pattern["count"][0]), int(pattern["count"][1]))
-	var base_x := 900.0 + slot * 700.0 + rng.randf_range(-100.0, 100.0)
+	var base_x := 620.0 + slot * 520.0 + rng.randf_range(-80.0, 80.0)
 	var base_y := rng.randf_range(-170.0, 170.0)
 	var hp: float = float(pattern["hp"]) * hp_scale
 	var behaviour := String(pattern["behaviour"])

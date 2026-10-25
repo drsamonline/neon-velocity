@@ -8,7 +8,7 @@ class_name Player
 const LAYER_PLAYER := 2
 const MAX_HEALTH := 100
 
-var move_speed: float = 420.0
+var move_speed: float = 380.0
 var dash_speed: float = 1250.0
 var dash_duration: float = 0.16
 var dash_cooldown: float = 0.7

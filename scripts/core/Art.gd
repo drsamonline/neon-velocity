@@ -80,9 +80,9 @@ func _build(sprite_name: String) -> Image:
 		"boss_core":
 			return _boss_core()
 		"bullet_player":
-			return _bolt(Vector2i(10, 6), LIGHT_BLUE, WHITE)
+			return _bolt(Vector2i(16, 7), LIGHT_BLUE, WHITE)
 		"bullet_enemy":
-			return _bolt(Vector2i(8, 8), DARK_RED, ORANGE)
+			return _bolt(Vector2i(9, 9), ORANGE, DARK_RED)
 		"missile":
 			return _missile()
 		"spark":
@@ -171,21 +171,23 @@ func _sign(p: Vector2, a: Vector2, b: Vector2) -> float:
 # --- Sprites ------------------------------------------------------------
 
 func _player_ship() -> Image:
-	var img := _new_image(Vector2i(32, 18))
-	# Hull: a wedge pointing right.
-	_triangle(img, Vector2(2, 9), Vector2(24, 2), Vector2(24, 16), PALETTE[LIGHT_BLUE])
-	_triangle(img, Vector2(2, 9), Vector2(24, 5), Vector2(24, 13), PALETTE[WHITE])
-	_triangle(img, Vector2(6, 9), Vector2(20, 6), Vector2(20, 12), PALETTE[TEAL])
-	# Wings.
-	_triangle(img, Vector2(10, 3), Vector2(20, 0), Vector2(22, 6), PALETTE[LAVENDER])
-	_triangle(img, Vector2(10, 15), Vector2(20, 18), Vector2(22, 12), PALETTE[LAVENDER])
+	# A clean dart rather than a pile of greebles: at 3x on screen, detail turns
+	# into noise, so the silhouette does the work.
+	var img := _new_image(Vector2i(40, 20))
+	# Main hull.
+	_triangle(img, Vector2(2, 10), Vector2(34, 4), Vector2(34, 16), PALETTE[LIGHT_BLUE])
+	# Bright core running down the middle.
+	_triangle(img, Vector2(8, 10), Vector2(33, 7), Vector2(33, 13), PALETTE[WHITE])
+	# Wings, swept back.
+	_triangle(img, Vector2(12, 6), Vector2(26, 1), Vector2(28, 7), PALETTE[LAVENDER])
+	_triangle(img, Vector2(12, 14), Vector2(26, 19), Vector2(28, 13), PALETTE[LAVENDER])
 	# Cockpit.
-	_disc(img, Vector2(15, 9), 2.0, PALETTE[YELLOW])
-	_put(img, 15, 9, PALETTE[WHITE])
-	# Engine nozzles.
-	_fill(img, 0, 6, 3, 9, PALETTE[ORANGE])
-	_fill(img, 0, 10, 3, 13, PALETTE[ORANGE])
-	_fill(img, 0, 8, 2, 11, PALETTE[LIGHT_YELLOW])
+	_disc(img, Vector2(24, 10), 2.4, PALETTE[YELLOW])
+	_put(img, 24, 10, PALETTE[WHITE])
+	# Twin engines.
+	_fill(img, 0, 6, 4, 9, PALETTE[ORANGE])
+	_fill(img, 0, 11, 4, 14, PALETTE[ORANGE])
+	_fill(img, 0, 8, 3, 12, PALETTE[LIGHT_YELLOW])
 	return img
 
 
@@ -227,11 +229,25 @@ func _boss_core() -> Image:
 
 
 func _bolt(size: Vector2i, core: int, edge: int) -> Image:
+	# A streak, not a ball: projectiles read as motion when they are longer than
+	# they are tall.
 	var img := _new_image(size)
-	var c := Vector2(size.x / 2.0, size.y / 2.0)
-	_disc(img, c, size.y / 2.0, PALETTE[edge])
-	_disc(img, c, size.y / 3.0, PALETTE[core])
-	_put(img, int(c.x), int(c.y), PALETTE[WHITE])
+	var half := size.y / 2.0
+	var core_half := maxf(1.0, size.y * 0.28)
+	for x in size.x:
+		# Taper towards both ends so the streak looks like it is travelling.
+		var t := float(x) / float(maxi(1, size.x - 1))
+		var taper := 1.0 - pow(absf(t - 0.35) / 0.65, 2.0)
+		var h := half * clampf(taper, 0.15, 1.0)
+		for y in size.y:
+			var d := absf(float(y) + 0.5 - half)
+			if d <= h:
+				img.set_pixel(x, y, PALETTE[edge])
+			if d <= h * 0.55:
+				img.set_pixel(x, y, PALETTE[core])
+	# Hot tip at the front.
+	for y in range(int(half - core_half), int(half + core_half) + 1):
+		_put(img, size.x - 1, y, PALETTE[WHITE])
 	return img
 
 

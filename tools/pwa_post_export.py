@@ -23,6 +23,21 @@ import pathlib
 import re
 import sys
 
+DEMO_LINK = """
+		<style>
+			/* Only on the hosted demo page: a quiet way back to the landing site.
+			   Hidden on touch layouts, where the bottom edge belongs to the stick. */
+			#nv-back { position: fixed; left: 12px; bottom: 10px;
+				font: 11px/1.4 ui-monospace, Menlo, Consolas, monospace; letter-spacing: .18em;
+				text-transform: uppercase; color: rgba(223,230,245,.45); text-decoration: none;
+				padding: 4px 10px; border: 1px solid rgba(255,255,255,.12); border-radius: 2px;
+				background: rgba(5,5,13,.55); z-index: 20; }
+			#nv-back:hover { color: #29adff; border-color: rgba(41,173,255,.5); }
+			@media (pointer: coarse) { #nv-back { display: none; } }
+		</style>
+		<a id="nv-back" href="../">&#8592; neon velocity</a>
+"""
+
 REGISTER_SCRIPT = """
 		<script>
 			// neon-velocity: register the service worker ourselves, because Godot only
@@ -85,7 +100,9 @@ def prune_precache(worker: pathlib.Path, web_dir: pathlib.Path) -> tuple[int, in
 
 
 def main() -> int:
-    web_dir = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else "build/web")
+    args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    demo = "--demo" in sys.argv
+    web_dir = pathlib.Path(args[0] if args else "build/web")
     index = web_dir / "index.html"
     worker = web_dir / "index.service.worker.js"
     manifest = web_dir / "index.manifest.json"
@@ -103,6 +120,9 @@ def main() -> int:
 
     if "apple-mobile-web-app-capable" not in html:
         html = html.replace("\t</head>", META_TAGS + "\t</head>", 1)
+
+    if demo and 'id="nv-back"' not in html:
+        html = html.replace("\t</body>", DEMO_LINK + "\t</body>", 1)
 
     if "neon-velocity: on a touch device" not in html:
         html = html.replace("\t</body>", FULLSCREEN_SCRIPT + "\t</body>", 1)

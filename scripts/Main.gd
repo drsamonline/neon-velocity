@@ -82,7 +82,8 @@ func _build_background() -> void:
 	parallax.layer = -10
 	add_child(parallax)
 
-	_add_parallax_layer(parallax, "nebula", 0.04, Color(0.8, 0.7, 1.0, 0.45), Vector2(5.0, 3.0), -360.0)
+	_add_parallax_layer(parallax, "nebula", 0.04, Color(0.85, 0.75, 1.0, 0.6), Vector2(5.0, 3.0), -360.0)
+	_add_parallax_layer(parallax, "starfield", 0.09, Color(0.55, 0.6, 0.85, 0.55), Vector2(6.0, 3.6), -360.0)
 	_add_parallax_layer(parallax, "starfield", 0.16, Color(1.0, 1.0, 1.0, 1.0), Vector2(5.0, 3.0), -360.0)
 	_add_parallax_layer(parallax, "mountains", 0.42, Color(0.55, 0.6, 0.85, 0.65), Vector2(2.5, 1.5), 120.0)
 
