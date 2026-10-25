@@ -1,16 +1,17 @@
 extends Control
 class_name MainMenu
-## Title screen.
+## Title screen. Laid out with containers so it works from a phone in landscape
+## to an ultrawide monitor.
 
 const ACCENT := Color(0.29, 0.68, 1.0)
 
 var _difficulty_option: OptionButton
-var _best_label: Label
 
 
 func _ready() -> void:
 	AudioManager.set_music_intensity(0)
 	get_tree().paused = false
+	TouchInput.reset()
 	_build()
 
 
@@ -22,48 +23,38 @@ func _build() -> void:
 	backdrop.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(backdrop)
 
-	var nebula := TextureRect.new()
-	nebula.texture = Art.texture("nebula")
-	nebula.stretch_mode = TextureRect.STRETCH_TILE
-	nebula.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
-	nebula.set_anchors_preset(Control.PRESET_FULL_RECT)
-	nebula.modulate = Color(0.8, 0.8, 1.0, 0.55)
-	add_child(nebula)
+	_add_background(Art.texture("nebula"), Color(0.8, 0.8, 1.0, 0.55))
+	_add_background(Art.texture("starfield"), Color(1, 1, 1, 0.9))
 
-	var stars := TextureRect.new()
-	stars.texture = Art.texture("starfield")
-	stars.stretch_mode = TextureRect.STRETCH_TILE
-	stars.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
-	stars.set_anchors_preset(Control.PRESET_FULL_RECT)
-	stars.modulate = Color(1, 1, 1, 0.9)
-	add_child(stars)
+	var center := CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(center)
+
+	var box := VBoxContainer.new()
+	box.custom_minimum_size = Vector2(360, 0)
+	box.add_theme_constant_override("separation", 12)
+	center.add_child(box)
 
 	var title := Label.new()
 	title.text = "NEON VELOCITY"
-	title.add_theme_font_size_override("font_size", 76)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 64)
 	title.add_theme_color_override("font_color", ACCENT)
-	title.add_theme_color_override("font_shadow_color", Color(1.0, 0.3, 0.6, 0.6))
+	title.add_theme_color_override("font_shadow_color", Color(1.0, 0.3, 0.6, 0.65))
 	title.add_theme_constant_override("shadow_offset_x", 4)
 	title.add_theme_constant_override("shadow_offset_y", 4)
-	title.position = Vector2(0, 120)
-	title.size = Vector2(1280, 90)
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	add_child(title)
+	box.add_child(title)
 
 	var subtitle := Label.new()
 	subtitle.text = "a procedurally generated retro shooter"
-	subtitle.add_theme_font_size_override("font_size", 20)
-	subtitle.add_theme_color_override("font_color", Color(0.7, 0.7, 0.9))
-	subtitle.position = Vector2(0, 210)
-	subtitle.size = Vector2(1280, 30)
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	add_child(subtitle)
+	subtitle.add_theme_font_size_override("font_size", 18)
+	subtitle.add_theme_color_override("font_color", Color(0.7, 0.7, 0.9))
+	box.add_child(subtitle)
 
-	var box := VBoxContainer.new()
-	box.position = Vector2(490, 300)
-	box.size = Vector2(300, 320)
-	box.add_theme_constant_override("separation", 14)
-	add_child(box)
+	var spacer := Control.new()
+	spacer.custom_minimum_size = Vector2(0, 18)
+	box.add_child(spacer)
 
 	var new_run := _button(box, "NEW RUN")
 	new_run.pressed.connect(_on_new_run)
@@ -72,7 +63,7 @@ func _build() -> void:
 	for i in GameManager.DIFFICULTIES.size():
 		_difficulty_option.add_item(String(GameManager.DIFFICULTIES[i]["name"]), i)
 	_difficulty_option.selected = clampi(int(SaveSystem.get_setting("gameplay", "difficulty", 1)), 0, 3)
-	_difficulty_option.custom_minimum_size = Vector2(300, 44)
+	_difficulty_option.custom_minimum_size = Vector2(360, 44)
 	Style.style_option(_difficulty_option)
 	box.add_child(_difficulty_option)
 
@@ -82,29 +73,53 @@ func _build() -> void:
 	var quit := _button(box, "QUIT")
 	quit.pressed.connect(_on_quit)
 
-	_best_label = Label.new()
-	_best_label.text = "BEST SCORE  %06d" % int(SaveSystem.meta.get("best_score", 0))
-	_best_label.add_theme_font_size_override("font_size", 18)
-	_best_label.add_theme_color_override("font_color", Color(1.0, 0.92, 0.27))
-	_best_label.position = Vector2(0, 640)
-	_best_label.size = Vector2(1280, 24)
-	_best_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	add_child(_best_label)
+	var best := Label.new()
+	best.text = "BEST SCORE  %06d" % int(SaveSystem.meta.get("best_score", 0))
+	best.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	best.add_theme_font_size_override("font_size", 18)
+	best.add_theme_color_override("font_color", Color(1.0, 0.92, 0.27))
+	box.add_child(best)
 
-	var controls := Label.new()
-	controls.text = "WASD / arrows move   ·   Z or left click fires   ·   Space dashes   ·   Q / E switch weapon   ·   Esc pauses"
-	controls.add_theme_font_size_override("font_size", 15)
-	controls.add_theme_color_override("font_color", Color(0.6, 0.6, 0.75))
-	controls.position = Vector2(0, 676)
-	controls.size = Vector2(1280, 22)
-	controls.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	add_child(controls)
+	var hint := Label.new()
+	hint.text = "WASD / arrows move   ·   Z or click fires   ·   Space dashes   ·   Q / E weapon   ·   Esc pauses\non a phone: left thumb moves, right thumb fires"
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	hint.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
+	hint.offset_top = -58
+	hint.offset_bottom = -12
+	hint.offset_left = 24
+	hint.offset_right = -24
+	hint.add_theme_font_size_override("font_size", 15)
+	hint.add_theme_color_override("font_color", Color(0.6, 0.6, 0.75))
+	add_child(hint)
+
+	var version := Label.new()
+	version.text = "v%s" % str(ProjectSettings.get_setting("application/config/version", "1.0.0"))
+	version.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	version.offset_left = -110
+	version.offset_top = -34
+	version.offset_right = -16
+	version.offset_bottom = -10
+	version.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	version.add_theme_font_size_override("font_size", 14)
+	version.add_theme_color_override("font_color", Color(0.45, 0.45, 0.6))
+	add_child(version)
+
+
+func _add_background(texture: Texture2D, tint: Color) -> void:
+	var rect := TextureRect.new()
+	rect.texture = texture
+	rect.stretch_mode = TextureRect.STRETCH_TILE
+	rect.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
+	rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+	rect.modulate = tint
+	rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(rect)
 
 
 func _button(parent: Node, text: String) -> Button:
 	var button := Button.new()
 	button.text = text
-	button.custom_minimum_size = Vector2(300, 46)
+	button.custom_minimum_size = Vector2(360, 48)
 	button.add_theme_font_size_override("font_size", 22)
 	Style.style_button(button)
 	button.pressed.connect(func() -> void: AudioManager.play_sfx("ui_click"))

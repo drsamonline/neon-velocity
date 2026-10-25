@@ -24,6 +24,12 @@ There is also a **web build that installs as an app** (PWA) — see
 | Switch weapon | `Q` / `E` |
 | Pause | `Esc` |
 
+On a phone or tablet the game draws its own controls: drag anywhere on the left
+half to fly, `FIRE` and `DASH` sit under the right thumb, and `WPN` / pause are
+in the top-right corner. Turn the device to landscape — portrait shows a
+"rotate your device" screen. On the web build the first tap also asks for
+fullscreen and a landscape lock.
+
 ## Play in a browser (PWA)
 
 The project exports to Web, and the export is patched into a real installable

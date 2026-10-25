@@ -1,6 +1,6 @@
 extends Control
 class_name SettingsMenu
-## Settings: audio, visuals, gameplay. Values are persisted immediately.
+## Settings: audio, visuals, gameplay. Values are persisted on change.
 
 var _sfx_slider: HSlider
 var _music_slider: HSlider
@@ -24,62 +24,60 @@ func _build() -> void:
 	backdrop.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(backdrop)
 
-	var title := Label.new()
-	title.text = "SETTINGS"
-	title.add_theme_font_size_override("font_size", 44)
-	title.add_theme_color_override("font_color", Color(0.29, 0.68, 1.0))
-	title.position = Vector2(0, 60)
-	title.size = Vector2(1280, 60)
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	add_child(title)
+	var center := CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(center)
 
 	var panel := VBoxContainer.new()
-	panel.position = Vector2(390, 150)
-	panel.size = Vector2(500, 420)
-	panel.add_theme_constant_override("separation", 18)
-	add_child(panel)
+	panel.custom_minimum_size = Vector2(560, 0)
+	panel.add_theme_constant_override("separation", 14)
+	center.add_child(panel)
+
+	var title := Label.new()
+	title.text = "SETTINGS"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 40)
+	title.add_theme_color_override("font_color", Color(0.29, 0.68, 1.0))
+	panel.add_child(title)
 
 	_sfx_slider = _slider_row(panel, "SFX volume")
 	_music_slider = _slider_row(panel, "Music volume")
 	_crt_check = _check_row(panel, "CRT overlay")
 	_scanline_slider = _slider_row(panel, "Scanline intensity")
 	_shake_check = _check_row(panel, "Screen shake")
-
 	_fps_check = _check_row(panel, "Show FPS")
 	_fps_check.toggled.connect(func(on: bool) -> void:
 		_apply()
 		EventBus.settings_changed.emit("visual", "show_fps", on))
 
-	var difficulty_row := HBoxContainer.new()
-	difficulty_row.add_theme_constant_override("separation", 16)
-	panel.add_child(difficulty_row)
-	var difficulty_label := Label.new()
-	difficulty_label.text = "Default difficulty"
-	difficulty_label.custom_minimum_size = Vector2(240, 30)
-	difficulty_label.add_theme_font_size_override("font_size", 18)
-	difficulty_row.add_child(difficulty_label)
+	var difficulty_row := _row(panel, "Default difficulty")
 	_difficulty_option = OptionButton.new()
 	for i in GameManager.DIFFICULTIES.size():
 		_difficulty_option.add_item(String(GameManager.DIFFICULTIES[i]["name"]), i)
-	_difficulty_option.custom_minimum_size = Vector2(220, 34)
+	_difficulty_option.custom_minimum_size = Vector2(240, 36)
+	_difficulty_option.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	Style.style_option(_difficulty_option)
 	difficulty_row.add_child(_difficulty_option)
 
+	var spacer := Control.new()
+	spacer.custom_minimum_size = Vector2(0, 10)
+	panel.add_child(spacer)
+
 	var buttons := HBoxContainer.new()
-	buttons.position = Vector2(440, 600)
-	buttons.add_theme_constant_override("separation", 24)
-	add_child(buttons)
+	buttons.alignment = BoxContainer.ALIGNMENT_CENTER
+	buttons.add_theme_constant_override("separation", 20)
+	panel.add_child(buttons)
 
 	var back := Button.new()
 	back.text = "BACK"
-	back.custom_minimum_size = Vector2(180, 44)
+	back.custom_minimum_size = Vector2(200, 46)
 	Style.style_button(back)
 	back.pressed.connect(_on_back)
 	buttons.add_child(back)
 
 	var reset := Button.new()
-	reset.text = "RESET TO DEFAULTS"
-	reset.custom_minimum_size = Vector2(220, 44)
+	reset.text = "RESET"
+	reset.custom_minimum_size = Vector2(200, 46)
 	Style.style_button(reset)
 	reset.pressed.connect(_on_reset)
 	buttons.add_child(reset)
@@ -92,35 +90,36 @@ func _build() -> void:
 	_difficulty_option.item_selected.connect(func(_i: int) -> void: _apply())
 
 
-func _slider_row(parent: Node, label_text: String) -> HSlider:
+func _row(parent: Node, label_text: String) -> HBoxContainer:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 16)
 	parent.add_child(row)
 	var label := Label.new()
 	label.text = label_text
-	label.custom_minimum_size = Vector2(240, 30)
+	label.custom_minimum_size = Vector2(240, 32)
 	label.add_theme_font_size_override("font_size", 18)
+	label.add_theme_color_override("font_color", Style.TEXT)
 	row.add_child(label)
+	return row
+
+
+func _slider_row(parent: Node, label_text: String) -> HSlider:
+	var row := _row(parent, label_text)
 	var slider := HSlider.new()
 	slider.min_value = 0
 	slider.max_value = 100
 	slider.step = 1
-	slider.custom_minimum_size = Vector2(220, 24)
+	slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	slider.custom_minimum_size = Vector2(0, 28)
 	row.add_child(slider)
 	return slider
 
 
 func _check_row(parent: Node, label_text: String) -> CheckBox:
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 16)
-	parent.add_child(row)
-	var label := Label.new()
-	label.text = label_text
-	label.custom_minimum_size = Vector2(240, 30)
-	label.add_theme_font_size_override("font_size", 18)
-	row.add_child(label)
+	var row := _row(parent, label_text)
 	var check := CheckBox.new()
-	check.custom_minimum_size = Vector2(40, 30)
+	check.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	check.custom_minimum_size = Vector2(40, 32)
 	check.add_theme_color_override("font_color", Style.TEXT)
 	row.add_child(check)
 	return check

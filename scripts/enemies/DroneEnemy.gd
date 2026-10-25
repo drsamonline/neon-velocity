@@ -24,13 +24,13 @@ func _ready() -> void:
 	collision_mask = 0
 	motion_mode = CharacterBody2D.MOTION_MODE_FLOATING
 	var circle := CircleShape2D.new()
-	circle.radius = 16.0 if elite else 13.0
+	circle.radius = 20.0 if elite else 17.0
 	_shape = CollisionShape2D.new()
 	_shape.shape = circle
 	add_child(_shape)
 	_sprite = Sprite2D.new()
 	_sprite.texture = Art.texture("elite_drone" if elite else "drone")
-	_sprite.scale = Vector2(2, 2)
+	_sprite.scale = Vector2(2.6, 2.6)
 	add_child(_sprite)
 
 
@@ -56,7 +56,7 @@ func activate(hp_multiplier: float, behaviour_name: String = "strafe", is_elite:
 	_slow_time = 0.0
 	_base_y = global_position.y
 	_sprite.texture = Art.texture("elite_drone" if is_elite else "drone")
-	_sprite.scale = Vector2(2.4, 2.4) if is_elite else Vector2(2, 2)
+	_sprite.scale = Vector2(3.0, 3.0) if is_elite else Vector2(2.6, 2.6)
 	_sprite.modulate = Color.WHITE
 	_alive = true
 

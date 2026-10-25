@@ -31,6 +31,11 @@ Engine: **Godot 4.3.stable.official.77dcf97d8**, headless, `gl_compatibility`.
 | 20 | Menu, gameplay, pause screens render | Puppeteer screenshots at 1280x720 | reviewed; contrast, parallax and HUD issues found and fixed |
 | 21 | PWA assets | manifest (standalone, 3 icons), service worker precache pruned to real files | present and consistent |
 | 22 | macOS export | `--export-release "macOS"` (unsigned, needs ETC2/ASTC enabled) | 51 MB .app.zip |
+| 23 | Touch controls drive the ship | headless Chrome at 844x390 with `hasTouch`, CDP multi-touch: stick drag + held fire | ship moved, bullets fired, score 23 → 106 |
+| 24 | Touch can start a run | tap on NEW RUN with a touch event | menu → game |
+| 25 | Portrait is handled | 390x844 viewport | "rotate your device" screen |
+| 26 | Layout fills the screen | 844x390, 1024x768, 1280x720 | no letterboxing, HUD anchored |
+| 27 | Touch input plumbing | 6 assertions in the headless suite | PASS |
 
 ## Checklist
 
@@ -77,6 +82,21 @@ Engine: **Godot 4.3.stable.official.77dcf97d8**, headless, `gl_compatibility`.
 - [ ] CI workflow — written but **not executed** (no runner here)
 - [ ] Visual/audio review by eye and ear — **not possible in this environment**
       (no display server; art was checked as rendered PNGs instead)
+
+## Mobile pass
+
+The first build was desktop-only and looked it: a 16:9 letterbox with a tiny
+strip in portrait, and no way to move without a keyboard. What changed:
+
+- stretch aspect `keep` -> `expand`, so the game fills a phone screen instead of
+  letterboxing; the HUD is anchored rather than positioned, so it follows.
+- `TouchControls`: floating stick, fire, dash, weapon and pause, hand-rolled
+  multi-touch (Godot's Control focus is single-touch, which a twin-stick shooter
+  cannot use).
+- `OrientationGate` autoload covers portrait with a rotate prompt.
+- The web shell asks for fullscreen and a landscape lock on the first tap.
+- Menus rebuilt on containers (CenterContainer + VBox), so they are centred and
+  legible at any aspect ratio.
 
 ## What looking at it changed
 

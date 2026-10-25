@@ -13,6 +13,7 @@ var hud: HUD
 var pause_menu: PauseMenu
 var mod_select: ModSelect
 var game_over_screen: GameOverScreen
+var touch_controls: TouchControls
 var crt_layer: CanvasLayer
 var crt_rect: ColorRect
 var crt_material: ShaderMaterial
@@ -58,12 +59,17 @@ func _ready() -> void:
 	game_over_screen = GameOverScreen.new()
 	add_child(game_over_screen)
 
+	touch_controls = TouchControls.new()
+	add_child(touch_controls)
+
+
 	_build_crt()
 
 	EventBus.game_over.connect(_on_game_over)
 	EventBus.screen_shake.connect(_on_screen_shake)
 	EventBus.settings_changed.connect(_on_setting_changed)
 
+	TouchInput.reset()
 	player.reset_for_run()
 	LevelManager.start_run(GameManager.seed_value(), world, player)
 	ReplaySystem.start_recording(GameManager.seed_value(), GameManager.difficulty, WeaponSystem.current_weapon)
@@ -76,8 +82,8 @@ func _build_background() -> void:
 	parallax.layer = -10
 	add_child(parallax)
 
-	_add_parallax_layer(parallax, "nebula", 0.05, Color(0.75, 0.65, 1.0, 0.30), Vector2(5.0, 3.0), -360.0)
-	_add_parallax_layer(parallax, "starfield", 0.16, Color(1.0, 1.0, 1.0, 0.85), Vector2(5.0, 3.0), -360.0)
+	_add_parallax_layer(parallax, "nebula", 0.04, Color(0.8, 0.7, 1.0, 0.45), Vector2(5.0, 3.0), -360.0)
+	_add_parallax_layer(parallax, "starfield", 0.16, Color(1.0, 1.0, 1.0, 1.0), Vector2(5.0, 3.0), -360.0)
 	_add_parallax_layer(parallax, "mountains", 0.42, Color(0.55, 0.6, 0.85, 0.65), Vector2(2.5, 1.5), 120.0)
 
 
@@ -128,7 +134,9 @@ func _on_setting_changed(category: String, key: String, value: Variant) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("pause") and not _game_over:
+	# Touch pause is polled in _process, not here, so it works without an event.
+	var touch_pause := TouchInput.consume_pause()
+	if (event.is_action_pressed("pause") or touch_pause) and not _game_over:
 		if mod_select.is_open():
 			return
 		pause_menu.set_paused(not pause_menu.is_open())
@@ -136,6 +144,11 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _process(delta: float) -> void:
+	# Polled rather than event-driven so the on-screen pause button always lands,
+	# even if the touch event was swallowed by a Control higher up.
+	if TouchInput.consume_pause() and not _game_over and not mod_select.is_open():
+		pause_menu.set_paused(not pause_menu.is_open())
+
 	if _shake_time > 0.0:
 		_shake_time -= delta
 		var strength := _shake_strength * clampf(_shake_time / 0.35, 0.0, 1.0)

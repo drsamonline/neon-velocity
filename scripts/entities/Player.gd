@@ -36,21 +36,21 @@ func _ready() -> void:
 	collision_mask = 0
 	motion_mode = CharacterBody2D.MOTION_MODE_FLOATING
 	var circle := CircleShape2D.new()
-	circle.radius = 11.0
+	circle.radius = 14.0
 	var shape := CollisionShape2D.new()
 	shape.shape = circle
 	add_child(shape)
 
 	_sprite = Sprite2D.new()
 	_sprite.texture = Art.texture("player_ship")
-	_sprite.scale = Vector2(2.4, 2.4)
+	_sprite.scale = Vector2(3.0, 3.0)
 	add_child(_sprite)
 
 	_thruster = Sprite2D.new()
 	_thruster.texture = Art.texture("spark")
-	_thruster.scale = Vector2(1.4, 1.0)
+	_thruster.scale = Vector2(1.4, 0.9)
 	_thruster.modulate = Color(0.4, 0.8, 1.0, 0.9)
-	_thruster.position = Vector2(-40, 0)
+	_thruster.position = Vector2(-64, 0)
 	add_child(_thruster)
 
 	EventBus.weapon_changed.connect(_on_weapon_changed)
@@ -74,6 +74,8 @@ func _physics_process(delta: float) -> void:
 	_tick_timers(delta)
 
 	var direction := Input.get_vector("move_left", "move_right", "move_up", "move_down")
+	if TouchInput.enabled and TouchInput.move.length() > 0.12:
+		direction = TouchInput.move
 	velocity = direction * move_speed
 
 	if _dash_time > 0.0:
@@ -85,9 +87,10 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 	_clamp_to_view()
 
-	if Input.is_action_just_pressed("weapon_next"):
+	var touch_step := TouchInput.consume_weapon_step()
+	if Input.is_action_just_pressed("weapon_next") or touch_step > 0:
 		WeaponSystem.cycle_weapon(1)
-	if Input.is_action_just_pressed("weapon_prev"):
+	if Input.is_action_just_pressed("weapon_prev") or touch_step < 0:
 		WeaponSystem.cycle_weapon(-1)
 
 	_handle_firing(delta)
@@ -97,7 +100,7 @@ func _physics_process(delta: float) -> void:
 	_thruster.modulate.a = 0.5 + 0.5 * absf(sin(Time.get_ticks_msec() * 0.02))
 
 	if ReplaySystem.recording:
-		ReplaySystem.record_frame(direction, Input.is_action_pressed("fire"), _dash_time > 0.0)
+		ReplaySystem.record_frame(direction, _is_firing(), _dash_time > 0.0)
 
 
 var _dash_dir: Vector2 = Vector2.RIGHT
@@ -112,12 +115,19 @@ func _tick_timers(delta: float) -> void:
 		_ramp_hits = 0
 	if _dash_time > 0.0:
 		_dash_time = maxf(0.0, _dash_time - delta)
-	if Input.is_action_just_pressed("dash") and _dash_cooldown_time <= 0.0:
+	var touch_dash := TouchInput.consume_dash()
+	if (Input.is_action_just_pressed("dash") or touch_dash) and _dash_cooldown_time <= 0.0:
 		_start_dash()
+
+
+func _is_firing() -> bool:
+	return Input.is_action_pressed("fire") or TouchInput.firing
 
 
 func _start_dash() -> void:
 	var direction := Input.get_vector("move_left", "move_right", "move_up", "move_down")
+	if TouchInput.enabled and TouchInput.move.length() > 0.12:
+		direction = TouchInput.move
 	_dash_dir = direction if direction != Vector2.ZERO else Vector2.RIGHT
 	_dash_time = dash_duration
 	_dash_cooldown_time = dash_cooldown
@@ -136,7 +146,7 @@ func _clamp_to_view() -> void:
 
 
 func _handle_firing(_delta: float) -> void:
-	if not Input.is_action_pressed("fire") or _fire_cooldown > 0.0:
+	if not _is_firing() or _fire_cooldown > 0.0:
 		return
 	var stats := WeaponSystem.get_stats()
 	_fire(stats)

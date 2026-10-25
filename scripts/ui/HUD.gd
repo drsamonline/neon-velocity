@@ -1,7 +1,10 @@
 extends CanvasLayer
 class_name HUD
-## In-run interface. Built in code so there is no .tscn to drift out of sync
-## with the scripts; it only ever listens to EventBus.
+## In-run interface.
+##
+## Everything is anchored rather than positioned, because the viewport is not a
+## fixed 1280x720: with stretch mode `expand` a phone shows a wider slice of the
+## world, and a hard-coded x coordinate would drift off-centre.
 
 const ACCENT := Color(0.29, 0.68, 1.0)
 const WARN := Color(1.0, 0.42, 0.42)
@@ -20,6 +23,7 @@ var _boss_name: Label
 var _boss_bar: ProgressBar
 var _mods_label: Label
 var _fps_label: Label
+var _top_right: VBoxContainer
 var _show_fps: bool = false
 
 
@@ -30,12 +34,11 @@ func _ready() -> void:
 	EventBus.settings_changed.connect(_on_setting_changed)
 	_show_fps = bool(SaveSystem.get_setting("visual", "show_fps", false))
 	_fps_label.visible = _show_fps
-	# The run starts before the HUD exists, so seed the labels from live state
-	# instead of waiting for the next signal.
 	_on_score_changed(int(GameManager.run_data.get("score", 0)), int(GameManager.run_data.get("combo", 0)))
 	_on_currency_changed(int(GameManager.run_data.get("currency", 0)))
 	_on_weapon_changed(WeaponSystem.current_weapon, WeaponSystem.level)
 	_on_xp_changed(WeaponSystem.xp, WeaponSystem.XP_PER_LEVEL)
+	get_viewport().size_changed.connect(_place_top_right)
 
 
 func _build() -> void:
@@ -44,51 +47,77 @@ func _build() -> void:
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(root)
 
-	_score_label = _make_label(root, Vector2(24, 16), 26, ACCENT)
+	# --- top left: score, combo, then health and the weapon line ---
+	# Everything lives in the top-left corner because the bottom-left belongs to
+	# the thumbstick on a phone.
+	var top_left := VBoxContainer.new()
+	top_left.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	top_left.position = Vector2(24, 14)
+	top_left.offset_right = 304
+	top_left.add_theme_constant_override("separation", 2)
+	root.add_child(top_left)
+	_score_label = _make_label(top_left, 30, ACCENT)
 	_score_label.text = "SCORE 000000"
-	_combo_label = _make_label(root, Vector2(24, 50), 20, GOLD)
+	_combo_label = _make_label(top_left, 22, GOLD)
 	_combo_label.text = ""
 
-	_currency_label = _make_label(root, Vector2(1000, 16), 22, GOLD)
+	# --- top right: currency and fps (shifted down when touch buttons are up) ---
+	_top_right = VBoxContainer.new()
+	_top_right.alignment = BoxContainer.ALIGNMENT_END
+	_top_right.add_theme_constant_override("separation", 0)
+	root.add_child(_top_right)
+	_fps_label = _make_label(_top_right, 15, Color(0.6, 0.9, 0.6))
+	_fps_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_place_top_right()
+
+	var gap := Control.new()
+	gap.custom_minimum_size = Vector2(0, 8)
+	top_left.add_child(gap)
+
+	_health_bar = _make_bar(top_left, Color(1.0, 0.35, 0.42), 16)
+	_shield_bar = _make_bar(top_left, Color(0.35, 0.75, 1.0), 8)
+	_xp_bar = _make_bar(top_left, ACCENT, 6)
+	_weapon_label = _make_label(top_left, 22, Color.WHITE)
+	_level_label = _make_label(top_left, 18, ACCENT)
+	_mods_label = _make_label(top_left, 14, Color(0.7, 0.7, 0.9))
+	_mods_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	_currency_label = _make_label(top_left, 22, GOLD)
 	_currency_label.text = "0 CR"
-	_currency_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	_currency_label.size = Vector2(240, 30)
 
-	_weapon_label = _make_label(root, Vector2(24, 640), 22, Color.WHITE)
-	_level_label = _make_label(root, Vector2(24, 668), 18, ACCENT)
-	_mods_label = _make_label(root, Vector2(24, 692), 15, Color(0.7, 0.7, 0.9))
-	_mods_label.size = Vector2(700, 22)
-
-	_health_bar = _make_bar(root, Vector2(24, 578), Vector2(260, 18), Color(1.0, 0.35, 0.42))
-	_shield_bar = _make_bar(root, Vector2(24, 602), Vector2(260, 8), Color(0.35, 0.75, 1.0))
-	_xp_bar = _make_bar(root, Vector2(24, 616), Vector2(260, 6), ACCENT)
-
+	# --- top centre: boss bar ---
 	_boss_box = VBoxContainer.new()
-	_boss_box.position = Vector2(390, 18)
-	_boss_box.size = Vector2(500, 60)
+	_boss_box.set_anchors_preset(Control.PRESET_CENTER_TOP)
+	_boss_box.offset_left = -260
+	_boss_box.offset_right = 260
+	_boss_box.offset_top = 16
+	_boss_box.offset_bottom = 76
 	_boss_box.add_theme_constant_override("separation", 2)
 	root.add_child(_boss_box)
 	_boss_name = Label.new()
 	_boss_name.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_boss_name.add_theme_font_size_override("font_size", 20)
+	_boss_name.add_theme_font_size_override("font_size", 22)
 	_boss_name.add_theme_color_override("font_color", WARN)
 	_boss_box.add_child(_boss_name)
-	var boss_bar_bg := _make_bar(_boss_box, Vector2.ZERO, Vector2(500, 16), WARN)
-	boss_bar_bg.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_boss_bar = boss_bar_bg
+	_boss_bar = _make_bar(_boss_box, WARN, 16)
 	_boss_box.visible = false
 
-	_fps_label = _make_label(root, Vector2(1180, 8), 14, Color(0.6, 0.9, 0.6))
-	_fps_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	_fps_label.size = Vector2(90, 20)
+
+func _place_top_right() -> void:
+	if _top_right == null:
+		return
+	var size := get_viewport().get_visible_rect().size
+	_top_right.offset_left = size.x - 284
+	_top_right.offset_right = size.x - 24
+	# The touch build puts pause and weapon buttons in the top-right corner.
+	_top_right.offset_top = 232 if TouchInput.enabled else 14
+	_top_right.offset_bottom = _top_right.offset_top + 70
 
 
-func _make_label(parent: Node, pos: Vector2, size: int, color: Color) -> Label:
+func _make_label(parent: Node, font_size: int, color: Color) -> Label:
 	var label := Label.new()
-	label.position = pos
-	label.add_theme_font_size_override("font_size", size)
+	label.add_theme_font_size_override("font_size", font_size)
 	label.add_theme_color_override("font_color", color)
-	label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.8))
+	label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.85))
 	label.add_theme_constant_override("shadow_offset_x", 2)
 	label.add_theme_constant_override("shadow_offset_y", 2)
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -96,11 +125,10 @@ func _make_label(parent: Node, pos: Vector2, size: int, color: Color) -> Label:
 	return label
 
 
-func _make_bar(parent: Node, pos: Vector2, bar_size: Vector2, color: Color) -> ProgressBar:
+func _make_bar(parent: Node, color: Color, height: int) -> ProgressBar:
 	var bar := ProgressBar.new()
-	bar.position = pos
-	bar.custom_minimum_size = bar_size
-	bar.size = bar_size
+	bar.custom_minimum_size = Vector2(0, height)
+	bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	bar.show_percentage = false
 	bar.min_value = 0
 	bar.max_value = 100
@@ -149,10 +177,7 @@ func _on_game_started(_difficulty: int) -> void:
 
 func _on_score_changed(score: int, combo: int) -> void:
 	_score_label.text = "SCORE %06d" % score
-	if combo > 1:
-		_combo_label.text = "COMBO x%d" % combo
-	else:
-		_combo_label.text = ""
+	_combo_label.text = "COMBO x%d" % combo if combo > 1 else ""
 
 
 func _on_health_changed(current: int, maximum: int) -> void:
@@ -167,7 +192,7 @@ func _on_shield_changed(current: int, maximum: int) -> void:
 
 func _on_weapon_changed(weapon_id: String, level: int) -> void:
 	var definition: Dictionary = WeaponSystem.WEAPONS[weapon_id]
-	_weapon_label.text = "%s  ·  %s" % [String(definition["name"]).to_upper(), String(definition["blurb"])]
+	_weapon_label.text = "%s · %s" % [String(definition["name"]).to_upper(), String(definition["blurb"])]
 	_level_label.text = "LV %d" % level
 
 
@@ -180,9 +205,11 @@ func _on_currency_changed(amount: int) -> void:
 	_currency_label.text = "%d CR" % amount
 
 
-func _on_mod_acquired(mod_id: String) -> void:
-	var mod: Dictionary = WeaponSystem.MODS[mod_id]
-	_mods_label.text = "MODS  " + ", ".join(WeaponSystem.mods.map(func(id: String) -> String: return String(WeaponSystem.MODS[id]["name"])))
+func _on_mod_acquired(_mod_id: String) -> void:
+	var names: Array[String] = []
+	for id in WeaponSystem.mods:
+		names.append(String(WeaponSystem.MODS[id]["name"]))
+	_mods_label.text = "MODS  " + ", ".join(names)
 
 
 func _on_boss_spawned(boss_name: String, hp: int, max_hp: int) -> void:

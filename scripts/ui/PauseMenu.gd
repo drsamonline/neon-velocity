@@ -1,9 +1,6 @@
 extends CanvasLayer
 class_name PauseMenu
-## Escape menu. Runs while the tree is paused.
-
-var _panel: Control
-
+## Escape menu, and the on-screen pause button. Runs while the tree is paused.
 
 func _ready() -> void:
 	layer = 20
@@ -14,42 +11,36 @@ func _ready() -> void:
 
 func _build() -> void:
 	var dim := ColorRect.new()
-	dim.color = Color(0, 0, 0, 0.6)
+	dim.color = Color(0, 0, 0, 0.66)
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(dim)
 
+	var center := CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(center)
+
 	var box := VBoxContainer.new()
-	box.position = Vector2(490, 240)
-	box.size = Vector2(300, 260)
-	box.add_theme_constant_override("separation", 16)
-	add_child(box)
+	box.custom_minimum_size = Vector2(320, 0)
+	box.add_theme_constant_override("separation", 14)
+	center.add_child(box)
 
 	var title := Label.new()
 	title.text = "PAUSED"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", 40)
 	title.add_theme_color_override("font_color", Color(0.29, 0.68, 1.0))
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(title)
 
-	var resume := _button(box, "RESUME")
-	resume.pressed.connect(func() -> void: set_paused(false))
-
-	var restart := _button(box, "RESTART RUN")
-	restart.pressed.connect(_on_restart)
-
-	var settings := _button(box, "SETTINGS")
-	settings.pressed.connect(_on_settings)
-
-	var menu := _button(box, "QUIT TO MENU")
-	menu.pressed.connect(_on_menu)
-
-	_panel = box
+	_button(box, "RESUME").pressed.connect(func() -> void: set_paused(false))
+	_button(box, "RESTART RUN").pressed.connect(_on_restart)
+	_button(box, "SETTINGS").pressed.connect(_on_settings)
+	_button(box, "QUIT TO MENU").pressed.connect(_on_menu)
 
 
 func _button(parent: Node, text: String) -> Button:
 	var button := Button.new()
 	button.text = text
-	button.custom_minimum_size = Vector2(300, 44)
+	button.custom_minimum_size = Vector2(320, 46)
 	button.add_theme_font_size_override("font_size", 20)
 	Style.style_button(button)
 	button.pressed.connect(func() -> void: AudioManager.play_sfx("ui_click"))
@@ -60,6 +51,7 @@ func _button(parent: Node, text: String) -> Button:
 func set_paused(paused: bool) -> void:
 	visible = paused
 	get_tree().paused = paused
+	TouchInput.reset()
 	AudioManager.play_sfx("ui_pause")
 	EventBus.pause_toggled.emit(paused)
 

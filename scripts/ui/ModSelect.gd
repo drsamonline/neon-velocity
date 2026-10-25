@@ -1,8 +1,8 @@
 extends CanvasLayer
 class_name ModSelect
-## Pops up when a mod pickup is collected: pick one of three.
+## Mod pickup: pause the run and offer three cards. Pick with a click, a tap or
+## the 1-3 keys.
 
-var _buttons: Array[Button] = []
 var _choices: Array[String] = []
 var _open: bool = false
 
@@ -20,6 +20,7 @@ func open(choices: Array) -> void:
 	_open = true
 	visible = true
 	get_tree().paused = true
+	TouchInput.reset()
 	for child in get_children():
 		child.queue_free()
 	_build(choices)
@@ -27,37 +28,38 @@ func open(choices: Array) -> void:
 
 func _build(choices: Array) -> void:
 	var dim := ColorRect.new()
-	dim.color = Color(0.01, 0.01, 0.05, 0.8)
+	dim.color = Color(0.01, 0.01, 0.05, 0.85)
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(dim)
 
+	var center := CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(center)
+
 	var box := VBoxContainer.new()
-	box.position = Vector2(390, 200)
-	box.size = Vector2(500, 320)
-	box.add_theme_constant_override("separation", 12)
-	add_child(box)
+	box.custom_minimum_size = Vector2(520, 0)
+	box.add_theme_constant_override("separation", 10)
+	center.add_child(box)
 
 	var title := Label.new()
 	title.text = "CHOOSE A MOD"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", 32)
 	title.add_theme_color_override("font_color", Color(1.0, 0.92, 0.27))
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(title)
 
-	_buttons.clear()
 	_choices.clear()
 	for mod_id in choices:
-		_choices.append(String(mod_id))
 		var mod: Dictionary = WeaponSystem.MODS[String(mod_id)]
+		var id := String(mod_id)
+		_choices.append(id)
 		var button := Button.new()
 		button.text = "%s\n%s" % [String(mod["name"]), String(mod["blurb"])]
-		button.custom_minimum_size = Vector2(500, 62)
+		button.custom_minimum_size = Vector2(520, 64)
 		button.add_theme_font_size_override("font_size", 18)
 		Style.style_button(button, Style.GOLD)
-		var id := String(mod_id)
 		button.pressed.connect(func() -> void: _choose(id))
 		box.add_child(button)
-		_buttons.append(button)
 
 
 ## Pick by index; also used by the number keys and by the automated tests.

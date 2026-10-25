@@ -69,13 +69,13 @@ func _ready() -> void:
 	collision_mask = 0
 	motion_mode = CharacterBody2D.MOTION_MODE_FLOATING
 	var circle := CircleShape2D.new()
-	circle.radius = 46.0
+	circle.radius = 62.0
 	var shape := CollisionShape2D.new()
 	shape.shape = circle
 	add_child(shape)
 	_sprite = Sprite2D.new()
 	_sprite.texture = Art.texture("boss_core")
-	_sprite.scale = Vector2(1.5, 1.5)
+	_sprite.scale = Vector2(2.0, 2.0)
 	add_child(_sprite)
 
 

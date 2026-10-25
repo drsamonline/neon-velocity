@@ -53,6 +53,19 @@ func _run_tests() -> void:
 	WeaponSystem.select_weapon("railgun")
 	_check(String(WeaponSystem.get_stats()["kind"]) == "railgun", "railgun kind wrong")
 
+	# --- touch input plumbing -----------------------------------------
+	TouchInput.enable()
+	_check(TouchInput.enabled, "touch input did not enable")
+	TouchInput.request_dash()
+	_check(TouchInput.consume_dash(), "dash request was not queued")
+	_check(not TouchInput.consume_dash(), "dash request was not cleared")
+	TouchInput.request_weapon_step(1)
+	_check(TouchInput.consume_weapon_step() == 1, "weapon step was not queued")
+	TouchInput.request_pause()
+	_check(TouchInput.consume_pause(), "pause request was not queued")
+	TouchInput.reset()
+	TouchInput.enabled = false
+
 	# --- save round trip ----------------------------------------------
 	SaveSystem.save_run({"score": 4242, "wave": 3, "kills": 9}, {"best_score": 4242})
 	var loaded := SaveSystem.load_run()

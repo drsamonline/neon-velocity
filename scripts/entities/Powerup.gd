@@ -32,7 +32,7 @@ func _ready() -> void:
 	add_child(shape)
 	_sprite = Sprite2D.new()
 	_sprite.texture = Art.texture("pickup_currency")
-	_sprite.scale = Vector2(2, 2)
+	_sprite.scale = Vector2(2.4, 2.4)
 	add_child(_sprite)
 	body_entered.connect(_on_body_entered)
 

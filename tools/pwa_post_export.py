@@ -39,6 +39,28 @@ REGISTER_SCRIPT = """
 		</script>
 """
 
+FULLSCREEN_SCRIPT = """
+		<script>
+			// neon-velocity: on a touch device, the first tap goes fullscreen and
+			// asks for landscape, which is the only comfortable way to play this
+			// on a phone. Both calls are optional and fail quietly in browsers
+			// that refuse them without a user gesture.
+			(function () {
+				var coarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+				if (!coarse) { return; }
+				function enter() {
+					var el = document.documentElement;
+					if (el.requestFullscreen) { el.requestFullscreen().catch(function () {}); }
+					if (screen.orientation && screen.orientation.lock) {
+						screen.orientation.lock('landscape').catch(function () {});
+					}
+					window.removeEventListener('pointerdown', enter);
+				}
+				window.addEventListener('pointerdown', enter);
+			})();
+		</script>
+"""
+
 META_TAGS = """		<meta name="theme-color" content="#29adff">
 		<meta name="apple-mobile-web-app-capable" content="yes">
 		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -74,9 +96,16 @@ def main() -> int:
             return 1
 
     html = index.read_text(encoding="utf-8")
+    html = html.replace(
+        'content="width=device-width, user-scalable=no, initial-scale=1.0"',
+        'content="width=device-width, user-scalable=no, initial-scale=1.0, viewport-fit=cover"',
+    )
 
     if "apple-mobile-web-app-capable" not in html:
         html = html.replace("\t</head>", META_TAGS + "\t</head>", 1)
+
+    if "neon-velocity: on a touch device" not in html:
+        html = html.replace("\t</body>", FULLSCREEN_SCRIPT + "\t</body>", 1)
 
     if "neon-velocity: register the service worker" not in html:
         html = html.replace("\t</body>", REGISTER_SCRIPT + "\t</body>", 1)
