@@ -1,9 +1,18 @@
 name: build
 
 # Everything is generated from this repository: no assets to commit, no local
-# Godot install needed. On a v* tag the workflow builds Web, Linux, Windows and
-# macOS and publishes them as a release; on main it also deploys the web build
-# to GitHub Pages.
+# Godot install needed.
+#
+#   push / PR        headless smoke test + 50 s soak test
+#   push to main     the above, then the Web build is patched into a PWA and
+#                    deployed to GitHub Pages
+#   v* tag           the above, then Web, Linux, Windows and macOS are built and
+#                    attached straight to a GitHub release
+#   manual dispatch  same as a tag, without publishing a release
+#
+# Deliberately no upload-artifact/download-artifact: each job attaches its own
+# file to the release. That keeps the pipeline working on accounts with a full
+# Actions artifact quota, and there is no 100 MB round trip through storage.
 
 on:
   push:
@@ -52,7 +61,7 @@ jobs:
       - name: Export web
         run: |
           # .gdignore keeps the importer out of build/, otherwise the exported
-          # PNGs get imported back into the project on the next scan.
+          # PNGs get re-imported into the project on the next scan.
           mkdir -p build/web
           touch build/.gdignore
           godot --headless --path . --export-release "Web" build/web/index.html
@@ -62,14 +71,24 @@ jobs:
         run: |
           cd build/web
           zip -q -r ../neon-velocity-web.zip .
-      - uses: actions/upload-artifact@v4
+      - name: Attach to release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
         with:
-          name: web
-          path: build/web
-      - uses: actions/upload-artifact@v4
-        with:
-          name: web-zip
-          path: build/neon-velocity-web.zip
+          files: build/neon-velocity-web.zip
+          generate_release_notes: true
+          body: |
+            Neon Velocity ${{ github.ref_name }}
+
+            | File | What to do with it |
+            |------|--------------------|
+            | `neon-velocity-web.zip` | Unzip and serve the folder over HTTPS or localhost. Installs as an app (PWA) and works offline after the first load. Needs a keyboard. |
+            | `neon-velocity-windows.zip` | Unzip, run `NeonVelocity.exe`. |
+            | `neon-velocity-linux.zip` | Unzip, `chmod +x NeonVelocity.x86_64`, run it. |
+            | `neon-velocity-macos.zip` | Unzip, right click the `.app` then Open (unsigned). |
+
+            All art and audio are generated at runtime, so there are no asset files
+            to install and nothing to download on first launch beyond the binary.
 
   pages:
     name: Deploy to GitHub Pages
@@ -80,20 +99,28 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: web
-          path: public
+      - uses: actions/checkout@v4
+      - name: Install Godot and export templates
+        run: bash tools/ci_install_godot.sh "$GODOT_VERSION" 1
+      - name: Import project
+        run: godot --headless --path . --import
+      - name: Export web
+        run: |
+          mkdir -p build/web
+          touch build/.gdignore
+          godot --headless --path . --export-release "Web" build/web/index.html
+      - name: Patch PWA shell
+        run: python3 tools/pwa_post_export.py build/web
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: public
+          path: build/web
       - id: deployment
         uses: actions/deploy-pages@v4
 
   desktop:
     name: Export ${{ matrix.preset }}
-    needs: test
+    needs: web
     if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     strategy:
@@ -123,37 +150,9 @@ jobs:
       - name: Package
         run: |
           cd "$(dirname "${{ matrix.out }}")"
-          zip -q -r "../../${{ matrix.artifact }}.zip" .
-      - uses: actions/upload-artifact@v4
+          zip -q -r "$GITHUB_WORKSPACE/build/${{ matrix.artifact }}.zip" .
+      - name: Attach to release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
         with:
-          name: ${{ matrix.artifact }}
-          path: build/${{ matrix.artifact }}.zip
-
-  release:
-    name: Publish release
-    needs: [web, desktop]
-    if: startsWith(github.ref, 'refs/tags/v')
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          path: artifacts
-      - name: Collect
-        run: |
-          mkdir -p dist
-          find artifacts -name '*.zip' -exec cp {} dist/ \;
-          ls -la dist
-      - uses: softprops/action-gh-release@v2
-        with:
-          files: dist/*.zip
-          generate_release_notes: true
-          body: |
-            Neon Velocity ${{ github.ref_name }}
-
-            - `neon-velocity-web.zip` - the browser/PWA build. Unzip and serve over
-              HTTPS (or localhost); it installs as an app and works offline after
-              the first load.
-            - `neon-velocity-windows.zip` - unzip and run `NeonVelocity.exe`.
-            - `neon-velocity-linux.zip` - unzip, `chmod +x`, run the binary.
-            - `neon-velocity-macos.zip` - unzip and run the `.app` (unsigned: right
-              click, Open, the first time).
+          files: build/${{ matrix.artifact }}.zip
