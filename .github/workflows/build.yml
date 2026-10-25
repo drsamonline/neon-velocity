@@ -93,7 +93,11 @@ jobs:
   pages:
     name: Deploy to GitHub Pages
     needs: web
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    # Opt-in: GitHub Pages needs a public repository on the free plan, and this
+    # repo is private. Once Pages is enabled, set the repository variable
+    # ENABLE_PAGES=true (Settings > Secrets and variables > Actions > Variables)
+    # and every push to main will publish the PWA.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.ENABLE_PAGES == 'true'
     runs-on: ubuntu-latest
     environment:
       name: github-pages

@@ -137,9 +137,14 @@ Everything is automated in `.github/workflows/build.yml`:
 
 So shipping a new version is `git tag v1.1.0 && git push --tags`.
 
-Note on Pages: GitHub Pages needs a **public** repository on the free plan. On a
-private repo the Pages job is skipped by GitHub, and the web zip from the release
-can be dropped on any static host instead.
+Note on Pages: GitHub Pages needs a **public** repository on the free plan, so
+the Pages job is opt-in. To turn it on, make the repository public, enable Pages
+with "GitHub Actions" as the source, then set a repository variable
+`ENABLE_PAGES=true` (Settings -> Secrets and variables -> Actions -> Variables).
+Every push to `main` will then publish the PWA. Until then, take
+`neon-velocity-web.zip` from the release and drop the unzipped folder on any
+static host — Netlify, Cloudflare Pages, itch.io and GitHub Pages all work,
+because the build needs no special headers.
 
 ## Saves and replays
 
