@@ -76,7 +76,7 @@ Engine: **Godot 4.3.stable.official.77dcf97d8**, headless, `gl_compatibility`.
 - [x] Typed GDScript throughout
 - [x] Headless smoke test wired to a non-zero exit code
 - [x] Sprite preview tool
-- [x] MIT licence
+- [x] PolyForm Noncommercial licence
 - [x] `.gitignore` covering `.godot/`, builds and generated previews
 - [ ] Export presets — written but **not exercised** (no export templates here)
 - [ ] CI workflow — written but **not executed** (no runner here)
