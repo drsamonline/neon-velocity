@@ -1,6 +1,6 @@
 [![build](https://img.shields.io/github/actions/workflow/status/drsamonline/neon-velocity/build.yml?branch=main&style=flat-square&label=build&color=29adff)](https://github.com/drsamonline/neon-velocity/actions/workflows/build.yml)
 [![release](https://img.shields.io/github/v/release/drsamonline/neon-velocity?style=flat-square&color=ffec27)](https://github.com/drsamonline/neon-velocity/releases)
-[![license](https://img.shields.io/badge/license-MIT-ff77a8?style=flat-square)](LICENSE)
+[![license](https://img.shields.io/badge/license-PolyForm Noncommercial-ff77a8?style=flat-square)](LICENSE)
 [![godot](https://img.shields.io/badge/godot-4.3-478cbf?style=flat-square)](https://godotengine.org)
 [![platforms](https://img.shields.io/badge/platforms-web%20%C2%B7%20windows%20%C2%B7%20linux%20%C2%B7%20macos-83769c?style=flat-square)](#downloads)
 [![PWA](https://img.shields.io/badge/PWA-installable%20%C2%B7%20offline-00e436?style=flat-square)](https://drsamonline.github.io/neon-velocity/)
@@ -184,4 +184,4 @@ to re-simulate it, but no playback UI is wired up yet.
 
 ## License
 
-MIT — see `LICENSE`.
+PolyForm Noncommercial — see `LICENSE`.
