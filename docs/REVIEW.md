@@ -193,7 +193,7 @@ The parts that were sound, and are implemented here as written:
 - **4-layer adaptive music at 140 BPM**, now actually layered.
 - **Local save + replay files** under `user://`, JSON, obfuscated with XOR and
   documented as *not* encryption.
-- **MIT licence, CI workflow, export presets, headless test.**
+- **PolyForm Noncommercial licence, CI workflow, export presets, headless test.**
 
 ---
 
