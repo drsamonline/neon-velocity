@@ -73,7 +73,7 @@ jobs:
           zip -q -r ../neon-velocity-web.zip .
       - name: Attach to release
         if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65   # was @v2
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64   # was @v3.0.3
         with:
           files: build/neon-velocity-web.zip
           generate_release_notes: true
@@ -163,6 +163,6 @@ jobs:
           zip -q -r "$GITHUB_WORKSPACE/build/${{ matrix.artifact }}.zip" .
       - name: Attach to release
         if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65   # was @v2
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64   # was @v3.0.3
         with:
           files: build/${{ matrix.artifact }}.zip
