@@ -38,7 +38,7 @@ jobs:
     name: Headless tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262   # was @v4
       - name: Install Godot
         run: bash tools/ci_install_godot.sh "$GODOT_VERSION" 0
       - name: Import project
@@ -53,7 +53,7 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262   # was @v4
       - name: Install Godot and export templates
         run: bash tools/ci_install_godot.sh "$GODOT_VERSION" 1
       - name: Import project
@@ -73,7 +73,7 @@ jobs:
           zip -q -r ../neon-velocity-web.zip .
       - name: Attach to release
         if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65   # was @v2
         with:
           files: build/neon-velocity-web.zip
           generate_release_notes: true
@@ -100,7 +100,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262   # was @v4
       - name: Install Godot and export templates
         run: bash tools/ci_install_godot.sh "$GODOT_VERSION" 1
       - name: Import project
@@ -121,12 +121,12 @@ jobs:
           python3 tools/pwa_post_export.py public/play --demo
           find public -maxdepth 1 -type f | sort
           find public/play -maxdepth 1 -type f | sort | head -20
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b   # was @v5
+      - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa   # was @v3
         with:
           path: public
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e   # was @v4
 
   desktop:
     name: Export ${{ matrix.preset }}
@@ -147,7 +147,7 @@ jobs:
             out: build/macos/NeonVelocity.zip
             artifact: neon-velocity-macos
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262   # was @v4
       - name: Install Godot and export templates
         run: bash tools/ci_install_godot.sh "$GODOT_VERSION" 1
       - name: Import project
@@ -163,6 +163,6 @@ jobs:
           zip -q -r "$GITHUB_WORKSPACE/build/${{ matrix.artifact }}.zip" .
       - name: Attach to release
         if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65   # was @v2
         with:
           files: build/${{ matrix.artifact }}.zip
