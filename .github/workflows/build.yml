@@ -38,7 +38,7 @@ jobs:
     name: Headless tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262   # was @v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1   # was @v7.0.1
       - name: Install Godot
         run: bash tools/ci_install_godot.sh "$GODOT_VERSION" 0
       - name: Import project
@@ -53,7 +53,7 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262   # was @v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1   # was @v7.0.1
       - name: Install Godot and export templates
         run: bash tools/ci_install_godot.sh "$GODOT_VERSION" 1
       - name: Import project
@@ -100,7 +100,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262   # was @v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1   # was @v7.0.1
       - name: Install Godot and export templates
         run: bash tools/ci_install_godot.sh "$GODOT_VERSION" 1
       - name: Import project
@@ -147,7 +147,7 @@ jobs:
             out: build/macos/NeonVelocity.zip
             artifact: neon-velocity-macos
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262   # was @v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1   # was @v7.0.1
       - name: Install Godot and export templates
         run: bash tools/ci_install_godot.sh "$GODOT_VERSION" 1
       - name: Import project
