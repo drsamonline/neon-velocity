@@ -121,7 +121,7 @@ jobs:
           python3 tools/pwa_post_export.py public/play --demo
           find public -maxdepth 1 -type f | sort
           find public/play -maxdepth 1 -type f | sort | head -20
-      - uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b   # was @v5
+      - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d   # was @v6.0.0
       - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa   # was @v3
         with:
           path: public
