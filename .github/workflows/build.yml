@@ -112,6 +112,7 @@ jobs:
           godot --headless --path . --export-release "Web" build/web/index.html
       - name: Compose the site
         run: |
+          set -o pipefail
           # /        -> the landing page from site/
           # /play/   -> the game itself, patched into a PWA
           mkdir -p public
