@@ -118,9 +118,23 @@ func _run_tests() -> void:
 	_check(boss_found, "boss did not spawn on chunk 4")
 
 	# --- damage and death ---------------------------------------------
-	var health_before := int(player_node.get("health"))
+	# This check used to be "health went down", and that is only true while the
+	# player holds NO shield: take_damage absorbs into the shield first, and a
+	# shield powerup can be picked up during the 7-second run above. So the check
+	# was a coin-flip that failed roughly whenever a shield was collected — it
+	# failed in CI on 2026-10-26 (run 40301794539) and passed six times in a row
+	# locally, which is the signature of a flaky assertion, not a broken game.
+	# The invariant that always holds is that a 12-point hit costs 12 points of
+	# EFFECTIVE health, wherever those points live. i-frames from a hit taken
+	# during the run would swallow the blow too, so let any active invulnerability
+	# expire first — the same wait the killing blow below already does.
+	for i in 60:
+		await get_tree().physics_frame
+	var effective_before := int(player_node.get("health")) + int(player_node.get("shield"))
 	player_node.call("take_damage", 12)
-	_check(int(player_node.get("health")) < health_before, "player did not take damage")
+	var effective_after := int(player_node.get("health")) + int(player_node.get("shield"))
+	_check(effective_after < effective_before,
+		"player did not take damage (health + shield unchanged: %d -> %d)" % [effective_before, effective_after])
 
 	# Let the post-hit invulnerability window expire before the killing blow.
 	for i in 60:
