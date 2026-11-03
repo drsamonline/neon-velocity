@@ -92,9 +92,11 @@ jobs:
   pages:
     name: Deploy to GitHub Pages
     needs: web
-    # Opt-in: set the repository variable ENABLE_PAGES=true once Pages is enabled
-    # with "GitHub Actions" as the source.
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.ENABLE_PAGES == 'true'
+    # Pages is configured with "GitHub Actions" as its source, so a push to main
+    # deploys the composed site: site/ at the root, the Godot export at /play/.
+    # The old opt-in variable is gone — it was a guard against deploying before
+    # Pages existed, and Pages exists now, so the guard only meant a dead site.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
